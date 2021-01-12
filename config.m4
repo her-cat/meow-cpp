@@ -1,82 +1,86 @@
-dnl config.m4 for extension meow
-
-dnl Comments in this file start with the string 'dnl'.
-dnl Remove where necessary.
-
-dnl If your extension references something external, use with:
-
-dnl PHP_ARG_WITH(meow, for meow support,
-dnl Make sure that the comment is aligned:
-dnl [  --with-meow             Include meow support])
-
-dnl Otherwise use enable:
-
 PHP_ARG_ENABLE(meow, whether to enable meow support,
-dnl Make sure that the comment is aligned:
 [  --enable-meow          Enable meow support], no)
 
+# AC_CANONICAL_HOST
+
 if test "$PHP_MEOW" != "no"; then
-  dnl Write more examples of tests here...
+    PHP_ADD_LIBRARY(pthread)
+    MEOW_ASM_DIR="thirdparty/boost/asm/"
+    CFLAGS="-Wall -pthread $CFLAGS"
 
-  dnl # get library FOO build options from pkg-config output
-  dnl AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-  dnl AC_MSG_CHECKING(for libfoo)
-  dnl if test -x "$PKG_CONFIG" && $PKG_CONFIG --exists foo; then
-  dnl   if $PKG_CONFIG foo --atleast-version 1.2.3; then
-  dnl     LIBFOO_CFLAGS=\`$PKG_CONFIG foo --cflags\`
-  dnl     LIBFOO_LIBDIR=\`$PKG_CONFIG foo --libs\`
-  dnl     LIBFOO_VERSON=\`$PKG_CONFIG foo --modversion\`
-  dnl     AC_MSG_RESULT(from pkgconfig: version $LIBFOO_VERSON)
-  dnl   else
-  dnl     AC_MSG_ERROR(system libfoo is too old: version 1.2.3 required)
-  dnl   fi
-  dnl else
-  dnl   AC_MSG_ERROR(pkg-config not found)
-  dnl fi
-  dnl PHP_EVAL_LIBLINE($LIBFOO_LIBDIR, MEOW_SHARED_LIBADD)
-  dnl PHP_EVAL_INCLINE($LIBFOO_CFLAGS)
+dnl 判断机器所使用的操作系统
 
-  dnl # --with-meow -> check with-path
-  dnl SEARCH_PATH="/usr/local /usr"     # you might want to change this
-  dnl SEARCH_FOR="/include/meow.h"  # you most likely want to change this
-  dnl if test -r $PHP_MEOW/$SEARCH_FOR; then # path given as parameter
-  dnl   MEOW_DIR=$PHP_MEOW
-  dnl else # search default path list
-  dnl   AC_MSG_CHECKING([for meow files in default path])
-  dnl   for i in $SEARCH_PATH ; do
-  dnl     if test -r $i/$SEARCH_FOR; then
-  dnl       MEOW_DIR=$i
-  dnl       AC_MSG_RESULT(found in $i)
-  dnl     fi
-  dnl   done
-  dnl fi
-  dnl
-  dnl if test -z "$MEOW_DIR"; then
-  dnl   AC_MSG_RESULT([not found])
-  dnl   AC_MSG_ERROR([Please reinstall the meow distribution])
-  dnl fi
+    AS_CASE([$host_os],
+        [linux*], [MEOW_OS="LINUX"],
+        []
+    )
 
-  dnl # --with-meow -> add include path
-  dnl PHP_ADD_INCLUDE($MEOW_DIR/include)
+dnl 判断 CPU 类型
 
-  dnl # --with-meow -> check for lib and symbol presence
-  dnl LIBNAME=MEOW # you may want to change this
-  dnl LIBSYMBOL=MEOW # you most likely want to change this
+    AS_CASE([$host_cpu],
+        [x86_64*], [MEOW_CPU="x86_64"],
+        [x86*], [MEOW_CPU="x86"],
+        [i?86*], [MEOW_CPU="x86"],
+        [arm*], [MEOW_CPU="arm"],
+        [aarch64*], [MEOW_CPU="arm64"],
+        [arm64*], [MEOW_CPU="arm64"],
+        []
+    )
 
-  dnl PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
-  dnl [
-  dnl   PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $MEOW_DIR/$PHP_LIBDIR, MEOW_SHARED_LIBADD)
-  dnl   AC_DEFINE(HAVE_MEOWLIB,1,[ ])
-  dnl ],[
-  dnl   AC_MSG_ERROR([wrong meow lib version or lib not found])
-  dnl ],[
-  dnl   -L$MEOW_DIR/$PHP_LIBDIR -lm
-  dnl ])
-  dnl
-  dnl PHP_SUBST(MEOW_SHARED_LIBADD)
+dnl 根据操作系统及 CPU 类型使用对应的汇编文件
 
-  dnl # In case of no dependencies
-  AC_DEFINE(HAVE_MEOW, 1, [ Have meow support ])
+    if test "$MEOW_CPU" = "x86_64"; then
+      if test "$MEOW_OS" = "LINUX"; then
+          MEOW_CONTEXT_ASM_FILE="x86_64_sysv_elf_gas.S"
+      fi
+    elif test "$MEOW_CPU" = "x86"; then
+      if test "$MEOW_OS" = "LINUX"; then
+          MEOW_CONTEXT_ASM_FILE="i386_sysv_elf_gas.S"
+      fi
+    elif test "$MEOW_CPU" = "arm"; then
+      if test "$MEOW_OS" = "LINUX"; then
+          MEOW_CONTEXT_ASM_FILE="arm_aapcs_elf_gas.S"
+      fi
+    elif test "$MEOW_CPU" = "arm64"; then
+      if test "$MEOW_OS" = "LINUX"; then
+          MEOW_CONTEXT_ASM_FILE="arm64_aapcs_elf_gas.S"
+      fi
+    elif test "$MEOW_CPU" = "mips32"; then
+      if test "$MEOW_OS" = "LINUX"; then
+          MEOW_CONTEXT_ASM_FILE="mips32_o32_elf_gas.S"
+      fi
+    fi
 
-  PHP_NEW_EXTENSION(meow, meow.c, $ext_shared)
+    meow_source_file="\
+        meow.c \
+        ${MEOW_ASM_DIR}make_${MEOW_CONTEXT_ASM_FILE} \
+        ${MEOW_ASM_DIR}jump_${MEOW_CONTEXT_ASM_FILE}
+    "
+
+dnl 声明扩展的名称、需要的源文件名、编译形式
+
+    PHP_NEW_EXTENSION(meow, $meow_source_file, $ext_shared, ,, cxx)
+
+dnl 添加额外的包含头文件的目录
+
+    PHP_ADD_INCLUDE([$ext_srcdir])
+    PHP_ADD_INCLUDE([$ext_srcdir/include])
+
+dnl 复制头文件
+
+    PHP_INSTALL_HEADERS([ext/meow], [*.h config.h include/*.h thirdparty/*.h])
+
+dnl 使用 C++
+
+    PHP_REQUIRE_CXX()
+
+dnl 指定编译 C++ 用到的编译选项
+
+    CXXFLAGS="$CXXFLAGS -Wall -Wno-unused-function -Wno-deprecated -Wno-deprecated-declarations"
+    CXXFLAGS="$CXXFLAGS -std=c++11"
+
+dnl 编译 boost 提供的代码
+
+    PHP_ADD_BUILD_DIR($ext_builddir/thirdparty/boost)
+    PHP_ADD_BUILD_DIR($ext_builddir/thirdparty/boost/asm)
 fi
