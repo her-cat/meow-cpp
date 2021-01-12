@@ -52,7 +52,9 @@ dnl 根据操作系统及 CPU 类型使用对应的汇编文件
     fi
 
     meow_source_file="\
-        meow.c \
+        meow.cc \
+        meow_coroutine.cc \
+        meow_coroutine_util.cc \
         ${MEOW_ASM_DIR}make_${MEOW_CONTEXT_ASM_FILE} \
         ${MEOW_ASM_DIR}jump_${MEOW_CONTEXT_ASM_FILE}
     "
