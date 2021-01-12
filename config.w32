@@ -1,0 +1,7 @@
+ARG_ENABLE('meow', 'meow support', 'no');
+
+if (PHP_MEOW != 'no') {
+	AC_DEFINE('HAVE_MEOW', 1, 'meow support enabled');
+
+	EXTENSION('meow', 'meow.c', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+}
