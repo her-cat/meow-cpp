@@ -1,5 +1,7 @@
 #include "meow_coroutine.h"
 
+using Meow::PHPCoroutine;
+
 /* 定义 Coroutine::create 方法的参数 */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_create, 0, 0, 1)
     ZEND_ARG_CALLABLE_INFO(0, func, 0)
@@ -24,6 +26,8 @@ static PHP_METHOD(meow_coroutine_util, create)
     if (zend_call_function(&fci, &fcc) != SUCCESS) {
         return;
     }
+
+    PHPCoroutine::create(&fcc, fci.param_count, fci.params);
 
     *return_value = result;
 }
