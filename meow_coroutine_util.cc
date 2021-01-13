@@ -1,6 +1,6 @@
 #include "meow_coroutine.h"
 
-using Meow::PHPCoroutine;
+using meow::PHPCoroutine;
 
 /* 定义 Coroutine::create 方法的参数 */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_create, 0, 0, 1)
