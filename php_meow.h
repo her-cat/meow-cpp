@@ -33,4 +33,6 @@ ZEND_BEGIN_MODULE_GLOBALS(meow)
 
 ZEND_END_MODULE_GLOBALS(meow)
 
+void meow_coroutine_util_init();
+
 #endif	/* PHP_MEOW_H */

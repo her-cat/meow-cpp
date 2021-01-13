@@ -3,7 +3,7 @@
 /* 模块初始化阶段 */
 PHP_MINIT_FUNCTION(meow)
 {
-    php_printf("MINIT\n");
+    meow_coroutine_util_init();
     return SUCCESS;
 }
 
