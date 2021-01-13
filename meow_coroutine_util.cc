@@ -5,9 +5,27 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_create, 0, 0, 1)
     ZEND_ARG_CALLABLE_INFO(0, func, 0)
 ZEND_END_ARG_INFO()
 
+/* 创建协程 */
 static PHP_METHOD(meow_coroutine_util, create)
 {
-    php_printf("success\n");
+    zval result;
+    /* 用来存放 create 传递的函数 */
+    zend_fcall_info fci = empty_fcall_info;
+    zend_fcall_info_cache fcc = empty_fcall_info_cache;
+
+    /* -1 表示没有最大参数个数限制 */
+    ZEND_PARSE_PARAMETERS_START(1, -1)
+        Z_PARAM_FUNC(fci, fcc)
+        /* 解析可变参数 */
+        Z_PARAM_VARIADIC("*", fci.params, fci.param_count)
+    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
+
+    fci.retval = &result;
+    if (zend_call_function(&fci, &fcc) != SUCCESS) {
+        return;
+    }
+
+    *return_value = result;
 }
 
 /* 定义 Coroutine 的方法列表 */

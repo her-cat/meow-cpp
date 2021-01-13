@@ -1,5 +1,5 @@
 phpize --clean
 phpize
 ./configure
-make
+make -j8
 make install
