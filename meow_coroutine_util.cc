@@ -16,6 +16,11 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_yield, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+/* 定义 Coroutine::resume 方法的参数 */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_resume, 0, 0, 1)
+    ZEND_ARG_INFO(0, cid)
+ZEND_END_ARG_INFO()
+
 /* 创建协程 */
 PHP_METHOD(meow_coroutine_util, create)
 {
@@ -44,11 +49,33 @@ PHP_METHOD(meow_coroutine_util, yield)
     RETURN_TRUE
 }
 
+/* 恢复协程 */
+PHP_METHOD(meow_coroutine_util, resume)
+{
+    zend_long cid;
+    Coroutine *coroutine;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_LONG(cid)
+    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
+
+    auto coroutine_iterator = user_yield_coroutines.find(cid);
+
+    coroutine = coroutine_iterator->second;
+    /* 从 user_yield_coroutines 中删除被恢复的协程 */
+    user_yield_coroutines.erase(cid);
+    /* 恢复协程 */
+    coroutine->resume();
+
+    RETURN_TRUE
+}
+
 /* 定义 Coroutine 的方法列表 */
 const zend_function_entry meow_coroutine_util_methods[] =
 {
     PHP_ME(meow_coroutine_util, create, arginfo_meow_coroutine_create, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(meow_coroutine_util, yield, arginfo_meow_coroutine_yield, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(meow_coroutine_util, resume, arginfo_meow_coroutine_resume, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_FE_END
 };
 

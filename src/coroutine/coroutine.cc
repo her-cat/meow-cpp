@@ -45,3 +45,11 @@ void Coroutine::yield()
     /* 切换协程上下文 */
     ctx.swap_out();
 }
+
+/* 恢复协程 */
+void Coroutine::resume()
+{
+    origin = current;
+    current = this;
+    ctx.swap_in();
+}
