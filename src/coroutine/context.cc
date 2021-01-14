@@ -34,7 +34,7 @@ bool Context::swap_in()
     return true;
 }
 
-/* 让出当前协程的上下文 */
+/* 切换到前一个协程的上下文 */
 bool Context::swap_out()
 {
     /* 将当前上下文信息保存到 ctx_，并切换到 swap_ctx_ */

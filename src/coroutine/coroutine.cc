@@ -36,3 +36,12 @@ Coroutine *Coroutine::get_current()
 {
     return current;
 }
+
+/* 让出协程 */
+void Coroutine::yield()
+{
+    /* 设置上一个协程作为当前正在运行的协程 */
+    current = origin;
+    /* 切换协程上下文 */
+    ctx.swap_out();
+}
