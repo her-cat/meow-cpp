@@ -60,6 +60,10 @@ PHP_METHOD(meow_coroutine_util, resume)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
     auto coroutine_iterator = user_yield_coroutines.find(cid);
+    if (coroutine_iterator == user_yield_coroutines.end()) {
+        php_error_docref(NULL, E_WARNING, "resume error");
+        RETURN_FALSE
+    }
 
     coroutine = coroutine_iterator->second;
     /* 从 user_yield_coroutines 中删除被恢复的协程 */
