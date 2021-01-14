@@ -52,4 +52,13 @@ void Coroutine::resume()
     origin = current;
     current = this;
     ctx.swap_in();
+
+    if (ctx.is_end()) {
+        cid = current->get_cid();
+        /* 设置之前正在运行的协程 */
+        current = origin;
+        /* 删除当前协程 */
+        coroutines.erase(cid);
+        delete this;
+    }
 }
