@@ -33,7 +33,7 @@ bool Context::swap_in()
 /* 让出当前协程的上下文 */
 bool Context::swap_out()
 {
-    jump_fcontext(&ctx_, &swap_ctx_, (intptr_t) this, true);
+    jump_fcontext(&ctx_, swap_ctx_, (intptr_t) this, true);
     return true;
 }
 
