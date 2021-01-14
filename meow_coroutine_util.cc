@@ -10,7 +10,7 @@ ZEND_END_ARG_INFO()
 /* 创建协程 */
 static PHP_METHOD(meow_coroutine_util, create)
 {
-    zval result;
+    long cid;
     /* 用来存放 create 传递的函数 */
     zend_fcall_info fci = empty_fcall_info;
     zend_fcall_info_cache fcc = empty_fcall_info_cache;
@@ -22,14 +22,8 @@ static PHP_METHOD(meow_coroutine_util, create)
         Z_PARAM_VARIADIC("*", fci.params, fci.param_count)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
-    fci.retval = &result;
-    if (zend_call_function(&fci, &fcc) != SUCCESS) {
-        return;
-    }
-
-    PHPCoroutine::create(&fcc, fci.param_count, fci.params);
-
-    *return_value = result;
+    cid = PHPCoroutine::create(&fcc, fci.param_count, fci.params);
+    RETURN_LONG(cid)
 }
 
 /* 定义 Coroutine 的方法列表 */

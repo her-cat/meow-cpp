@@ -19,13 +19,17 @@ Context::Context(size_t stack_size, coroutine_func_t fn, void *private_data) :
 void Context::context_func(void *arg)
 {
     Context *_this = (Context *) arg;
+    /* 执行回调函数 */
     _this->fn_(_this->private_data_);
+    /* 标识已结束 */
     _this->end_ = true;
+    /* 让出当前协程 */
     _this->swap_out();
 }
 /* 进入当前协程的上下文 */
 bool Context::swap_in()
 {
+    /* 将当前上下文信息保存到 swap_ctx_，并切换到 ctx_ */
     jump_fcontext(&swap_ctx_, ctx_, (intptr_t) this, true);
     return true;
 }
@@ -33,6 +37,7 @@ bool Context::swap_in()
 /* 让出当前协程的上下文 */
 bool Context::swap_out()
 {
+    /* 将当前上下文信息保存到 ctx_，并切换到 swap_ctx_ */
     jump_fcontext(&ctx_, swap_ctx_, (intptr_t) this, true);
     return true;
 }
