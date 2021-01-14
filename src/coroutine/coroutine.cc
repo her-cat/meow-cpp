@@ -5,6 +5,7 @@ using meow::Coroutine;
 Coroutine *Coroutine::current = nullptr;
 size_t Coroutine::stack_size = DEFAULT_C_STACK_SIZE;
 long Coroutine::last_cid = 0;
+std::unordered_map<long, Coroutine *> Coroutine::coroutines;
 
 /* 创建协程 */
 long Coroutine::create(coroutine_func_t fn, void *args)
