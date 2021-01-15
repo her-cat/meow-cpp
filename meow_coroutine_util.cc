@@ -150,4 +150,6 @@ void meow_coroutine_util_init()
     INIT_NS_CLASS_ENTRY(meow_coroutine_ce, "Meow", "Coroutine", meow_coroutine_util_methods);
     /* 在 Zend 引擎中注册 Coroutine */
     meow_coroutine_ce_ptr = zend_register_internal_class(&meow_coroutine_ce TSRMLS_CC);
+    /* 设置 Coroutine 类的别名：Co */
+    zend_register_ns_class_alias("Meow", "Co", meow_coroutine_ce_ptr);
 }
