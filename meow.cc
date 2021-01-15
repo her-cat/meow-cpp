@@ -1,5 +1,11 @@
 #include "php_meow.h"
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_create, 0, 0, 1)
+    ZEND_ARG_CALLABLE_INFO(0, func, 0)
+ZEND_END_ARG_INFO()
+
+PHP_FUNCTION(meow_coroutine_create);
+
 /* 模块初始化阶段 */
 PHP_MINIT_FUNCTION(meow)
 {
@@ -37,6 +43,8 @@ PHP_MINFO_FUNCTION(meow)
 }
 
 const zend_function_entry meow_functions[] ={
+        PHP_FE(meow_coroutine_create, arginfo_meow_coroutine_create)
+        ZEND_NS_FALIAS("Meow", go, meow_coroutine_create, arginfo_meow_coroutine_create)
         PHP_FE_END
 };
 

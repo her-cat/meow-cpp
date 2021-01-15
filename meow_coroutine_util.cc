@@ -32,7 +32,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_defer, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 /* 创建协程 */
-PHP_METHOD(meow_coroutine_util, create)
+PHP_FUNCTION(meow_coroutine_create)
 {
     long cid;
     /* 用来存放 create 传递的函数 */
@@ -132,7 +132,7 @@ PHP_METHOD(meow_coroutine_util, defer)
 /* 定义 Coroutine 的方法列表 */
 const zend_function_entry meow_coroutine_util_methods[] =
 {
-    PHP_ME(meow_coroutine_util, create, arginfo_meow_coroutine_create, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    ZEND_FENTRY(create, ZEND_FN(meow_coroutine_create), arginfo_meow_coroutine_create, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(meow_coroutine_util, yield, arginfo_meow_coroutine_void, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(meow_coroutine_util, resume, arginfo_meow_coroutine_resume, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(meow_coroutine_util, getCid, arginfo_meow_coroutine_void, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
