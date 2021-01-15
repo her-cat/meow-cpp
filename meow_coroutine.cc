@@ -20,6 +20,17 @@ long PHPCoroutine::create(zend_fcall_info_cache *fci_cache, uint32_t argc, zval 
     return Coroutine::create(create_func, (void *) &args);
 }
 
+/* 添加延迟执行的函数 */
+void PHPCoroutine::defer(php_function_t *func)
+{
+    php_coroutine_task *task = (php_coroutine_task *) get_task();
+    if (task->defer_tasks == nullptr) {
+        task->defer_tasks = new std::stack<php_function_t *>;
+    }
+
+    task->defer_tasks->push(func);
+}
+
 /* 保存当前协程堆栈信息 */
 void PHPCoroutine::save_task(php_coroutine_task *task)
 {
@@ -85,6 +96,7 @@ void PHPCoroutine::create_func(void *arg)
 
     task->coroutine = Coroutine::get_current();
     task->coroutine->set_task((void *) task);
+    task->defer_tasks = nullptr;
 
     if (func->type == ZEND_USER_FUNCTION) {
         ZVAL_UNDEF(retval);
@@ -92,6 +104,8 @@ void PHPCoroutine::create_func(void *arg)
         zend_init_func_execute_data(call, &func->op_array, retval);
         zend_execute_ex(EG(current_execute_data));
     }
+
+    run_defer_tasks(get_task());
 
     zval_ptr_dtor(retval);
 }
@@ -113,4 +127,32 @@ void PHPCoroutine::vm_stack_init()
     EG(vm_stack_top) = EG(vm_stack)->top;
     EG(vm_stack_end) = EG(vm_stack)->end;
     EG(vm_stack_page_size) = size;
+}
+
+/* 运行延迟函数 */
+void PHPCoroutine::run_defer_tasks(php_coroutine_task *task)
+{
+    if (task->defer_tasks == nullptr) {
+        return;
+    }
+
+    zval result;
+    php_function_t *func;
+    std::stack<php_function_t *> *defer_tasks = task->defer_tasks;
+
+    while (!defer_tasks->empty()) {
+        func = defer_tasks->top();
+        defer_tasks->pop();
+        func->fci.retval = &result;
+
+        if (zend_call_function(&func->fci, &func->fcc) != SUCCESS) {
+            php_error_docref(NULL, E_WARNING, "execute defer error");
+            return;
+        }
+
+        efree(func);
+    }
+
+    delete defer_tasks;
+    task->defer_tasks = nullptr;
 }

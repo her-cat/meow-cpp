@@ -1,6 +1,7 @@
 #ifndef PHP_MEOW_COROUTINE_H
 #define PHP_MEOW_COROUTINE_H
 
+#include <stack>
 #include "php_meow.h"
 #include "coroutine.h"
 
@@ -15,6 +16,13 @@ struct php_coroutine_args
     uint32_t argc;
 };
 
+/* PHP 函数结构体 */
+struct php_function_t
+{
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcc;
+};
+
 /* 协程堆栈信息 */
 struct php_coroutine_task
 {
@@ -24,6 +32,7 @@ struct php_coroutine_task
     size_t vm_stack_page_size; /* 协程栈页大小 */
     zend_execute_data *execute_data; /* 当前协程栈的栈帧 */
     meow::Coroutine *coroutine;
+    std::stack<php_function_t *> *defer_tasks; /* 记录协程中需要延缓执行的函数 */
 };
 
 namespace meow
@@ -32,6 +41,7 @@ class PHPCoroutine
 {
 public:
     static long create(zend_fcall_info_cache *fci_cache, uint32_t argc, zval *argv);
+    static void defer(php_function_t *func);
 
 protected:
     static php_coroutine_task main_task;
@@ -41,6 +51,7 @@ protected:
     static php_coroutine_task *get_task(void);
     static void create_func(void *arg);
     static void vm_stack_init(void);
+    static void run_defer_tasks(php_coroutine_task *task);
 };
 }
 
