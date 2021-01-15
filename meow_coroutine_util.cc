@@ -8,7 +8,7 @@ using meow::Coroutine;
 static std::unordered_map<long, Coroutine *> user_yield_coroutines;
 
 /* 定义无参数 */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_study_coroutine_void, 0, 0, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_void, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 /* 定义 Coroutine::create 方法的参数 */
@@ -18,6 +18,11 @@ ZEND_END_ARG_INFO()
 
 /* 定义 Coroutine::resume 方法的参数 */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_resume, 0, 0, 1)
+    ZEND_ARG_INFO(0, cid)
+ZEND_END_ARG_INFO()
+
+/* 定义 Coroutine::isExist 方法的参数 */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_isExist, 0, 0, 1)
     ZEND_ARG_INFO(0, cid)
 ZEND_END_ARG_INFO()
 
@@ -80,13 +85,30 @@ PHP_METHOD(meow_coroutine_util, getCid)
     RETURN_LONG(Coroutine::get_current()->get_cid())
 }
 
+/* 是否存在某个协程 */
+PHP_METHOD(meow_coroutine_util, isExist)
+{
+    bool is_exist;
+    zend_long cid;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_LONG(cid)
+    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
+
+    auto coroutine_iterator = Coroutine::coroutines.find(cid);
+    is_exist = (coroutine_iterator != Coroutine::coroutines.end());
+
+    RETURN_BOOL(is_exist)
+}
+
 /* 定义 Coroutine 的方法列表 */
 const zend_function_entry meow_coroutine_util_methods[] =
 {
     PHP_ME(meow_coroutine_util, create, arginfo_meow_coroutine_create, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(meow_coroutine_util, yield, arginfo_study_coroutine_void, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(meow_coroutine_util, yield, arginfo_meow_coroutine_void, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(meow_coroutine_util, resume, arginfo_meow_coroutine_resume, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(meow_coroutine_util, getCid, arginfo_study_coroutine_void, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(meow_coroutine_util, getCid, arginfo_meow_coroutine_void, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(meow_coroutine_util, isExist, arginfo_meow_coroutine_isExist, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_FE_END
 };
 
