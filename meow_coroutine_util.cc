@@ -82,7 +82,12 @@ PHP_METHOD(meow_coroutine_util, resume)
 /* 获取当前协程的 id */
 PHP_METHOD(meow_coroutine_util, getCid)
 {
-    RETURN_LONG(Coroutine::get_current()->get_cid())
+    Coroutine *coroutine = Coroutine::get_current();
+    if (coroutine == nullptr) {
+        RETURN_LONG(-1)
+    }
+
+    RETURN_LONG(coroutine->get_cid())
 }
 
 /* 是否存在某个协程 */
