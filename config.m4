@@ -4,6 +4,8 @@ PHP_ARG_ENABLE(meow, whether to enable meow support,
 # AC_CANONICAL_HOST
 
 if test "$PHP_MEOW" != "no"; then
+    PHP_ADD_LIBRARY_WITH_PATH(uv, /usr/local/lib/, MEOW_SHARED_LIBADD)
+    PHP_SUBST(MEOW_SHARED_LIBADD)
     PHP_ADD_LIBRARY(pthread)
     MEOW_ASM_DIR="thirdparty/boost/asm/"
     CFLAGS="-Wall -pthread $CFLAGS"
