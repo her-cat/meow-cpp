@@ -6,10 +6,10 @@
 #include "coroutine.h"
 
 #define DEFAULT_PHP_STACK_PAGE_SIZE 8192
-#define PHP_COROUTINE_TASK_SLOT ((int)((ZEND_MM_ALIGNED_SIZE(sizeof(php_coroutine_task)) + ZEND_MM_ALIGNED_SIZE(sizeof(zval)) - 1) / ZEND_MM_ALIGNED_SIZE(sizeof(zval))))
+#define php_coroutine_task_t_SLOT ((int)((ZEND_MM_ALIGNED_SIZE(sizeof(php_coroutine_task_t)) + ZEND_MM_ALIGNED_SIZE(sizeof(zval)) - 1) / ZEND_MM_ALIGNED_SIZE(sizeof(zval))))
 
 /* 协程参数结构体 */
-struct php_coroutine_args
+struct php_coroutine_arg_t
 {
     zend_fcall_info_cache *fci_cache;
     zval *argv;
@@ -24,7 +24,7 @@ struct php_function_t
 };
 
 /* 协程堆栈信息 */
-struct php_coroutine_task
+struct php_coroutine_task_t
 {
     zval *vm_stack_top; /* 协程栈栈顶 */
     zval *vm_stack_end; /* 协程栈栈底 */
@@ -44,14 +44,14 @@ public:
     static void defer(php_function_t *func);
 
 protected:
-    static php_coroutine_task main_task;
+    static php_coroutine_task_t main_task;
 
-    static void save_task(php_coroutine_task *task);
-    static void save_vm_stack(php_coroutine_task *task);
-    static php_coroutine_task *get_task(void);
+    static void save_task(php_coroutine_task_t *task);
+    static void save_vm_stack(php_coroutine_task_t *task);
+    static php_coroutine_task_t *get_task(void);
     static void create_func(void *arg);
     static void vm_stack_init(void);
-    static void run_defer_tasks(php_coroutine_task *task);
+    static void run_defer_tasks(php_coroutine_task_t *task);
 };
 }
 

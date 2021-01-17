@@ -8,7 +8,7 @@ long Coroutine::last_cid = 0;
 std::unordered_map<long, Coroutine *> Coroutine::coroutines;
 
 /* 创建协程 */
-long Coroutine::create(coroutine_func_t fn, void *args)
+long Coroutine::create(coroutine_function_t fn, void *args)
 {
     return (new Coroutine(fn, args))->run();
 }

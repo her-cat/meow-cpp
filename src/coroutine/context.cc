@@ -3,7 +3,7 @@
 
 using meow::Context;
 
-Context::Context(size_t stack_size, coroutine_func_t fn, void *private_data) :
+Context::Context(size_t stack_size, coroutine_function_t fn, void *private_data) :
         stack_size_(stack_size), fn_(fn), private_data_(private_data)
 {
     swap_ctx_ = nullptr;

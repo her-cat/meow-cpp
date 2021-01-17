@@ -13,7 +13,7 @@ class Coroutine
 public:
     static std::unordered_map<long, Coroutine *> coroutines;
 
-    static long create(coroutine_func_t fn, void *args = nullptr);
+    static long create(coroutine_function_t fn, void *args = nullptr);
     static void *get_current_task(void);
     void *get_task();
     void set_task(void *_task);
@@ -33,7 +33,7 @@ protected:
     long cid; /* 协程 id */
     static long last_cid; /* 最后一个协程 id */
 
-    Coroutine(coroutine_func_t fn, void *private_data) :
+    Coroutine(coroutine_function_t fn, void *private_data) :
         ctx(stack_size, fn, private_data)
     {
         cid = ++last_cid;
