@@ -29,26 +29,26 @@ dnl 判断 CPU 类型
 
 dnl 根据操作系统及 CPU 类型使用对应的汇编文件
 
-    if test "$MEOW_CPU" = "x86_64"; then
-      if test "$MEOW_OS" = "LINUX"; then
-          MEOW_CONTEXT_ASM_FILE="x86_64_sysv_elf_gas.S"
+	if test "$MEOW_CPU" = "x86_64"; then
+        if test "$MEOW_OS" = "LINUX"; then
+            MEOW_CONTEXT_ASM_FILE="x86_64_sysv_elf_gas.S"
       fi
     elif test "$MEOW_CPU" = "x86"; then
-      if test "$MEOW_OS" = "LINUX"; then
-          MEOW_CONTEXT_ASM_FILE="i386_sysv_elf_gas.S"
-      fi
+        if test "$MEOW_OS" = "LINUX"; then
+            MEOW_CONTEXT_ASM_FILE="i386_sysv_elf_gas.S"
+        fi
     elif test "$MEOW_CPU" = "arm"; then
-      if test "$MEOW_OS" = "LINUX"; then
-          MEOW_CONTEXT_ASM_FILE="arm_aapcs_elf_gas.S"
-      fi
+        if test "$MEOW_OS" = "LINUX"; then
+            MEOW_CONTEXT_ASM_FILE="arm_aapcs_elf_gas.S"
+        fi
     elif test "$MEOW_CPU" = "arm64"; then
-      if test "$MEOW_OS" = "LINUX"; then
-          MEOW_CONTEXT_ASM_FILE="arm64_aapcs_elf_gas.S"
-      fi
+        if test "$MEOW_OS" = "LINUX"; then
+            MEOW_CONTEXT_ASM_FILE="arm64_aapcs_elf_gas.S"
+        fi
     elif test "$MEOW_CPU" = "mips32"; then
-      if test "$MEOW_OS" = "LINUX"; then
-          MEOW_CONTEXT_ASM_FILE="mips32_o32_elf_gas.S"
-      fi
+        if test "$MEOW_OS" = "LINUX"; then
+            MEOW_CONTEXT_ASM_FILE="mips32_o32_elf_gas.S"
+        fi
     fi
 
     meow_source_file="\
