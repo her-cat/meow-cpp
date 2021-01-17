@@ -153,6 +153,7 @@ PHP_METHOD(meow_coroutine_util, sleep)
     RETURN_TRUE
 }
 
+/* 协程调度器 */
 PHP_METHOD(meow_coroutine_util, scheduler)
 {
     if (PHPCoroutine::scheduler() < 0) {
