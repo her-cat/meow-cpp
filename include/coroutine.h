@@ -1,6 +1,7 @@
 #ifndef MEOW_COROUTINE_H
 #define MEOW_COROUTINE_H
 
+#include <uv.h>
 #include <unordered_map>
 #include "context.h"
 
@@ -20,6 +21,8 @@ public:
     static Coroutine *get_current(void);
     void yield();
     void resume();
+    static int sleep(double seconds);
+
     inline long get_cid() {
         return cid;
     }

@@ -156,3 +156,36 @@ void PHPCoroutine::run_defer_tasks(php_coroutine_task_t *task)
     delete defer_tasks;
     task->defer_tasks = nullptr;
 }
+
+/* 协程休眠 */
+int PHPCoroutine::sleep(double seconds)
+{
+    return Coroutine::sleep(seconds);
+}
+
+/* 协程调度器 */
+int PHPCoroutine::scheduler()
+{
+    int timeout;
+    uv_loop_t *loop = uv_default_loop();
+
+    while (loop->stop_flag == 0) {
+        /* 获取超时时间 */
+        timeout = uv__next_timeout(loop);
+        /* 进入休眠 */
+        usleep(timeout);
+
+        /* 修改当前的时间 */
+        loop->time = uv__hrtime(UV_CLOCK_FAST) / 1000000;
+        /* 运行定时器，遍历整个定时器堆，让每个定时器节点时间和 loop->time 进行比较，
+         * 如果定时器节点的时间大于 loop->time，就会指定这个定时器节点的回调函数 */
+        uv__run_timers(loop);
+
+        /* < 0 说明没有未执行的定时器了 */
+        if (uv__next_timeout(loop) < 0) {
+            uv_stop(loop);
+        }
+    }
+
+    return 0;
+}

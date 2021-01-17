@@ -62,3 +62,27 @@ void Coroutine::resume()
         delete this;
     }
 }
+
+/* 协程休眠定时器超时回调函数 */
+static void sleep_timeout(uv_timer_t *timer)
+{
+    /* 到达指定时间后恢复协程 */
+    ((Coroutine *) timer->data)->resume();
+}
+
+/* 协程休眠 */
+int Coroutine::sleep(double seconds)
+{
+    Coroutine *coroutine = Coroutine::get_current();
+
+    uv_timer_t timer;
+    timer.data = coroutine;
+    /* 初始化并启动定时器，到达指定事件后执行 sleep_timeout 函数 */
+    uv_timer_init(uv_default_loop(), &timer);
+    uv_timer_start(&timer, sleep_timeout, seconds * 1000, 0);
+
+    /* 切换出当前协程，模拟出协程自身阻塞的效果 */
+    coroutine->yield();
+
+    return 0;
+}

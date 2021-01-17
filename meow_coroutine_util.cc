@@ -31,6 +31,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_defer, 0, 0, 1)
     ZEND_ARG_CALLABLE_INFO(0, func, 0)
 ZEND_END_ARG_INFO()
 
+/* 定义 Coroutine::sleep 方法的参数 */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_sleep, 0, 0, 1)
+    ZEND_ARG_INFO(0, seconds)
+ZEND_END_ARG_INFO()
+
 /* 创建协程 */
 PHP_FUNCTION(meow_coroutine_create)
 {
@@ -129,6 +134,34 @@ PHP_METHOD(meow_coroutine_util, defer)
     PHPCoroutine::defer(func);
 }
 
+/* 协程休眠 */
+PHP_METHOD(meow_coroutine_util, sleep)
+{
+    double seconds;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_DOUBLE(seconds)
+    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
+
+    if (UNEXPECTED(seconds <= TIMER_MINIMUM_TIME)) {
+        php_error_docref(NULL, E_WARNING, "Timer must be greater than or equal to 0.001");
+        RETURN_FALSE
+    }
+
+    PHPCoroutine::sleep(seconds);
+
+    RETURN_TRUE
+}
+
+PHP_METHOD(meow_coroutine_util, scheduler)
+{
+    if (PHPCoroutine::scheduler() < 0) {
+        RETURN_FALSE
+    }
+
+    RETURN_TRUE
+}
+
 /* 定义 Coroutine 的方法列表 */
 const zend_function_entry meow_coroutine_util_methods[] =
 {
@@ -138,6 +171,8 @@ const zend_function_entry meow_coroutine_util_methods[] =
     PHP_ME(meow_coroutine_util, getCid, arginfo_meow_coroutine_void, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(meow_coroutine_util, isExist, arginfo_meow_coroutine_isExist, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(meow_coroutine_util, defer, arginfo_meow_coroutine_defer, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(meow_coroutine_util, sleep, arginfo_meow_coroutine_sleep, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(meow_coroutine_util, scheduler, arginfo_meow_coroutine_void, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_FE_END
 };
 
