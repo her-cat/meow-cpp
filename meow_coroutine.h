@@ -8,8 +8,12 @@
 #define DEFAULT_PHP_STACK_PAGE_SIZE 8192
 #define php_coroutine_task_t_SLOT ((int)((ZEND_MM_ALIGNED_SIZE(sizeof(php_coroutine_task_t)) + ZEND_MM_ALIGNED_SIZE(sizeof(zval)) - 1) / ZEND_MM_ALIGNED_SIZE(sizeof(zval))))
 
+typedef struct php_coroutine_arg_s php_coroutine_arg_t;
+typedef struct php_function_s php_function_t;
+typedef struct php_coroutine_task_s php_coroutine_task_t;
+
 /* 协程参数结构体 */
-struct php_coroutine_arg_t
+struct php_coroutine_arg_s
 {
     zend_fcall_info_cache *fci_cache;
     zval *argv;
@@ -17,14 +21,14 @@ struct php_coroutine_arg_t
 };
 
 /* PHP 函数结构体 */
-struct php_function_t
+struct php_function_s
 {
     zend_fcall_info fci;
     zend_fcall_info_cache fcc;
 };
 
 /* 协程堆栈信息 */
-struct php_coroutine_task_t
+struct php_coroutine_task_s
 {
     zval *vm_stack_top; /* 协程栈栈顶 */
     zval *vm_stack_end; /* 协程栈栈底 */
