@@ -30,7 +30,7 @@ PHP_METHOD(meow_coroutine_server, __construct)
 
     sock = meow_socket_create(MEOW_SOCK_TCP);
     meow_socket_bind(sock, MEOW_SOCK_TCP, Z_STRVAL_P(host), port);
-    listen(sock, 512);
+    meow_socket_listen(sock);
 
     /* 更新 Coroutine\Server 属性 */
     zend_update_property_long(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("sock"), sock);

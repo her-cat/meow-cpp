@@ -32,6 +32,7 @@ int meow_socket_bind(int sock, int type, char *host, int port)
 
         ret = bind(sock, (struct sockaddr *) &servaddr, sizeof(servaddr));
         if (ret < 0) {
+            meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno));
             return -1;
         }
 
@@ -39,6 +40,19 @@ int meow_socket_bind(int sock, int type, char *host, int port)
     }
 
     return -1;
+}
+
+/* 监听 socket */
+int meow_socket_listen(int sock)
+{
+    int ret;
+
+    ret = listen(sock, DEFAULT_LISTEN_BACKLOG);
+    if (ret < 0) {
+        meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno));
+    }
+
+    return ret;
 }
 
 /* 接受新连接 */

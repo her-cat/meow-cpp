@@ -2,6 +2,9 @@
 #define MEOW_SOCKET_H
 
 #include "meow.h"
+#include "log.h"
+
+#define DEFAULT_LISTEN_BACKLOG 512
 
 enum meow_sock_type {
     MEOW_SOCK_TCP = 1,
@@ -10,6 +13,7 @@ enum meow_sock_type {
 
 int meow_socket_create(int type);
 int meow_socket_bind(int sock, int type, char *host, int port);
+int meow_socket_listen(int sock);
 int meow_socket_accept(int sock);
 
 #endif /* MEOW_SOCKET_H */
