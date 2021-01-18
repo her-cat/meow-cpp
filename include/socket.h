@@ -10,5 +10,6 @@ enum meow_sock_type {
 
 int meow_socket_create(int type);
 int meow_socket_bind(int sock, int type, char *host, int port);
+int meow_socket_accept(int sock);
 
 #endif /* MEOW_SOCKET_H */

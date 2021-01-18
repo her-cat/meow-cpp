@@ -40,3 +40,12 @@ int meow_socket_bind(int sock, int type, char *host, int port)
 
     return -1;
 }
+
+/* 接受新连接 */
+int meow_socket_accept(int sock)
+{
+    struct sockaddr_in sa;
+    socklen_t len = sizeof(sa);
+
+    return accept(sock, (struct sockaddr *) &sa, &len);
+}

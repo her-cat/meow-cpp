@@ -6,6 +6,10 @@
 zend_class_entry meow_coroutine_sever_ce;
 zend_class_entry *meow_coroutine_sever_ce_ptr;
 
+/* 定义无参参数 */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_void, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
 /* 定义 Coroutine\Server::__construct 方法的参数 */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_construct, 0, 0, 2)
     ZEND_ARG_INFO(0, host)
@@ -34,10 +38,23 @@ PHP_METHOD(meow_coroutine_server, __construct)
     zend_update_property_long(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("port"), port);
 }
 
+/* 接受新连接 */
+PHP_METHOD(meow_coroutine_server, accept)
+{
+    zval *sock;
+    int conn_fd;
+
+    sock = meow_zend_read_property(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("sock"), 0);
+    conn_fd = meow_socket_accept(Z_LVAL_P(sock));
+
+    RETURN_LONG(conn_fd)
+}
+
 /* Coroutine\Server 的方法列表 */
 static const zend_function_entry meow_coroutine_server_methods[] =
 {
     PHP_ME(meow_coroutine_server, __construct, arginfo_meow_coroutine_server_construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+    PHP_ME(meow_coroutine_server, accept, arginfo_meow_coroutine_server_void, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
