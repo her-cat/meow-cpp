@@ -28,8 +28,8 @@ extern char meow_error[MEOW_ERROR_MSG_SIZE];
     meow_log_put(MEOW_LOG_TRACE, meow_trace);
 
 #define meow_warn(str, ...)                                                         \
-    snprintf(meow_error, MEOW_ERROR_MSG_SIZE, "%s: " str " in %s on line %d.", __func__, ##__VA_ARGS__, __FILE__, __LINE__); \
-    meow_log_put(MEOW_LOG_WARNING, meow_error);
+    snprintf(meow_warn, MEOW_ERROR_MSG_SIZE, "%s: " str " in %s on line %d.", __func__, ##__VA_ARGS__, __FILE__, __LINE__); \
+    meow_log_put(MEOW_LOG_WARNING, meow_warn);
 
 #define meow_error(str, ...)                                                         \
     snprintf(meow_error, MEOW_ERROR_MSG_SIZE, "%s: " str " in %s on line %d.", __func__, ##__VA_ARGS__, __FILE__, __LINE__); \

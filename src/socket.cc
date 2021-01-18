@@ -63,3 +63,16 @@ int meow_socket_accept(int sock)
 
     return accept(sock, (struct sockaddr *) &sa, &len);
 }
+
+/* 接收数据 */
+ssize_t meow_socket_recv(int sock, void *buf, size_t len, int flag)
+{
+    ssize_t ret;
+
+    ret = recv(sock, buf, len, flag);
+    if (ret < 0) {
+        meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno));
+    }
+
+    return ret;
+}
