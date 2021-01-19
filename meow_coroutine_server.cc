@@ -22,6 +22,12 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_recv, 0, 0, 2)
     ZEND_ARG_INFO(0, length)
 ZEND_END_ARG_INFO()
 
+/* 定义 Coroutine\Server::send 方法的参数 */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_send, 0, 0, 2)
+    ZEND_ARG_INFO(0, fd)
+    ZEND_ARG_INFO(0, data)
+ZEND_END_ARG_INFO()
+
 /* 构造函数 */
 PHP_METHOD(meow_coroutine_server, __construct)
 {
@@ -83,12 +89,35 @@ PHP_METHOD(meow_coroutine_server, recv)
     RETURN_STR(buf)
 }
 
+/* 发送数据 */
+PHP_METHOD(meow_coroutine_server, send)
+{
+    ssize_t ret;
+    zend_long fd;
+    char *data;
+    size_t length;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_LONG(fd)
+        Z_PARAM_STRING(data, length)
+    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
+
+    ret = meow_socket_send(fd, data, length, 0);
+    if (ret < 0) {
+        php_error_docref(NULL, E_WARNING, "send error");
+        RETURN_FALSE
+    }
+
+    RETURN_LONG(ret)
+}
+
 /* Coroutine\Server 的方法列表 */
 static const zend_function_entry meow_coroutine_server_methods[] =
 {
     PHP_ME(meow_coroutine_server, __construct, arginfo_meow_coroutine_server_construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(meow_coroutine_server, accept, arginfo_meow_coroutine_server_void, ZEND_ACC_PUBLIC)
     PHP_ME(meow_coroutine_server, recv, arginfo_meow_coroutine_server_recv, ZEND_ACC_PUBLIC)
+    PHP_ME(meow_coroutine_server, send, arginfo_meow_coroutine_server_send, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
