@@ -67,7 +67,7 @@ PHP_METHOD(meow_coroutine_server, recv)
 {
     int ret;
     zend_long fd;
-    zend_long length;
+    zend_long length = 65536;
     zend_string *buf;
 
     ZEND_PARSE_PARAMETERS_START(1, 2)
