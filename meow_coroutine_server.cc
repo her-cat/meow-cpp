@@ -79,6 +79,12 @@ PHP_METHOD(meow_coroutine_server, recv)
     buf = zend_string_alloc(length, 0);
 
     ret = meow_socket_recv(fd, ZSTR_VAL(buf), length, 0);
+    if (ret == 0) {
+        zend_update_property_long(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("errCode"), MEOW_ERROR_SESSION_CLOSED_BY_CLIENT);
+        zend_update_property_string(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("errMsg"), meow_strerror(MEOW_ERROR_SESSION_CLOSED_BY_CLIENT));
+        RETURN_FALSE
+    }
+
     if (ret < 0) {
         php_error_docref(NULL, E_WARNING, "recv error");
         RETURN_FALSE
@@ -131,4 +137,6 @@ void meow_coroutine_server_init()
     zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("sock"), -1, ZEND_ACC_PUBLIC);
     zend_declare_property_string(meow_coroutine_sever_ce_ptr, ZEND_STRL("host"), "", ZEND_ACC_PUBLIC);
     zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("port"), -1, ZEND_ACC_PUBLIC);
+    zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("errCode"), 0, ZEND_ACC_PUBLIC);
+    zend_declare_property_string(meow_coroutine_sever_ce_ptr, ZEND_STRL("errMsg"), "", ZEND_ACC_PUBLIC);
 }
