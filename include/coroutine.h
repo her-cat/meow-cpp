@@ -27,6 +27,11 @@ public:
         return cid;
     }
 
+    static inline Coroutine *get_by_cid(long id) {
+        auto i = coroutines.find(id);
+        return i != coroutines.end() ? i->second : nullptr;
+    }
+
 protected:
     void *task = nullptr;
     Coroutine *origin; /* 前一个协程 */

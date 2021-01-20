@@ -40,7 +40,7 @@ PHP_METHOD(meow_coroutine_server, __construct)
         Z_PARAM_LONG(port)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
-    sock = meow_socket_create(MEOW_SOCK_TCP);
+    sock = meow_socket_create(AF_INET, SOCK_STREAM, 0);
     meow_socket_bind(sock, MEOW_SOCK_TCP, Z_STRVAL_P(host), port);
     meow_socket_listen(sock);
 

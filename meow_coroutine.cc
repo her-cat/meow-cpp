@@ -166,24 +166,34 @@ int PHPCoroutine::sleep(double seconds)
 /* 协程调度器 */
 int PHPCoroutine::scheduler()
 {
-    int timeout;
-    size_t size;
     uv_loop_t *loop = uv_default_loop();
 
-    /* 初始化 epoll */
-    MEOW_G(poll).epollfd = epoll_create(256);
-    MEOW_G(poll).size = 16;
-    size = sizeof(struct epoll_event) * MEOW_G(poll).size;
-    MEOW_G(poll).events = (struct epoll_event *) malloc(size);
-    memset(MEOW_G(poll).events, 0, size);
+    if (!MEOW_G(poll)) {
+        init_meow_poll();
+    }
 
     while (loop->stop_flag == 0) {
+        int n, timeout;
+        epoll_event *events;
+
         /* 获取超时时间 */
         timeout = uv__next_timeout(loop);
 
+        events = MEOW_G(poll)->events;
         /* 通过 epoll_wait 让进程进入休眠，
          * 当有文件描述符可读/写，或到达超时时间时，进程会从休眠状态醒过来 */
-        epoll_wait(MEOW_G(poll).epollfd, MEOW_G(poll).events, MEOW_G(poll).size, timeout);
+        n = epoll_wait(MEOW_G(poll)->epollfd, MEOW_G(poll)->events, MEOW_G(poll)->size, timeout);
+
+        for (int i = 0; i < n; i++) {
+            int fd, id;
+            epoll_event *p = &events[i];
+            uint64_t u64 = p->data.u64;
+            Coroutine *coroutine;
+
+            fromuint64(u64, &fd, &id);
+            coroutine = Coroutine::get_by_cid(id);
+            coroutine->resume();
+        }
 
         /* 修改当前的时间 */
         loop->time = uv__hrtime(UV_CLOCK_FAST) / 1000000;
@@ -191,11 +201,13 @@ int PHPCoroutine::scheduler()
          * 如果定时器节点的时间大于 loop->time，就会指定这个定时器节点的回调函数 */
         uv__run_timers(loop);
 
-        /* < 0 说明没有未执行的定时器了 */
-        if (uv__next_timeout(loop) < 0) {
+        /* 没有未执行的定时器并且 poll 已经被释放 */
+        if (uv__next_timeout(loop) < 0 && !MEOW_G(poll)) {
             uv_stop(loop);
         }
     }
+
+    free_meow_poll();
 
     return 0;
 }
