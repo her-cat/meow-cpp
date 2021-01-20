@@ -167,13 +167,23 @@ int PHPCoroutine::sleep(double seconds)
 int PHPCoroutine::scheduler()
 {
     int timeout;
+    size_t size;
     uv_loop_t *loop = uv_default_loop();
+
+    /* 初始化 epoll */
+    MEOW_G(poll).epollfd = epoll_create(256);
+    MEOW_G(poll).size = 16;
+    size = sizeof(struct epoll_event) * MEOW_G(poll).size;
+    MEOW_G(poll).events = (struct epoll_event *) malloc(size);
+    memset(MEOW_G(poll).events, 0, size);
 
     while (loop->stop_flag == 0) {
         /* 获取超时时间 */
         timeout = uv__next_timeout(loop);
-        /* 进入休眠 */
-        usleep(timeout);
+
+        /* 通过 epoll_wait 让进程进入休眠，
+         * 当有文件描述符可读/写，或到达超时时间时，进程会从休眠状态醒过来 */
+        epoll_wait(MEOW_G(poll).epollfd, MEOW_G(poll).events, MEOW_G(poll).size, timeout);
 
         /* 修改当前的时间 */
         loop->time = uv__hrtime(UV_CLOCK_FAST) / 1000000;

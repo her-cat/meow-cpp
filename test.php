@@ -1,19 +1,18 @@
 <?php
 
 use Meow\Co;
-use Meow\Coroutine\Server;
 use function Meow\go;
 
-$server = new Server("127.0.0.1", 8080);
-$sock = $server->accept();
+go(function () {
+    var_dump("here1");
+    Co::sleep(0.5);
+    var_dump("here2");
+    Co::sleep(1);
+    var_dump("here3");
+    Co::sleep(1.5);
+    var_dump("here4");
+    Co::sleep(2);
+    var_dump("here5");
+});
 
-while (1) {
-    $buf = $server->recv($sock);
-    if ($buf == false)
-    {
-        var_dump($server->errCode);
-        var_dump($server->errMsg);
-        break;
-    }
-    $server->send($sock, $buf);
-}
+Co::scheduler();
