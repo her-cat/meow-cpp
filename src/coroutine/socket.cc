@@ -16,6 +16,12 @@ Socket::Socket(int domain, int type, int protocol)
     meow_socket_set_nonblock(sockfd);
 }
 
+/* 析构函数 */
+Socket::~Socket()
+{
+
+}
+
 /* 绑定 socket */
 int Socket::bind(int type, char *host, int port)
 {

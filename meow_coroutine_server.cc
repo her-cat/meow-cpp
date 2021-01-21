@@ -1,5 +1,7 @@
 #include "meow_coroutine_server.h"
 
+using meow::coroutine::Socket;
+
 /**
  * Define zend class entry.
  */
@@ -31,21 +33,24 @@ ZEND_END_ARG_INFO()
 /* 构造函数 */
 PHP_METHOD(meow_coroutine_server, __construct)
 {
-    int sock;
     zval *host;
     zend_long port;
+    zval zsocket;
+    Socket *socket;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
         Z_PARAM_ZVAL(host)
         Z_PARAM_LONG(port)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
-    sock = meow_socket_create(AF_INET, SOCK_STREAM, 0);
-    meow_socket_bind(sock, MEOW_SOCK_TCP, Z_STRVAL_P(host), port);
-    meow_socket_listen(sock);
+    socket = new Socket(AF_INET, SOCK_STREAM, 0);
+    socket->bind(MEOW_SOCK_TCP, Z_STRVAL_P(host), port);
+    socket->listen();
+
+    ZVAL_PTR(&zsocket, socket);
 
     /* 更新 Coroutine\Server 属性 */
-    zend_update_property_long(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("sock"), sock);
+    zend_update_property(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("zsocket"), &zsocket);
     zend_update_property_string(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("host"), Z_STRVAL_P(host));
     zend_update_property_long(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("port"), port);
 }
@@ -134,7 +139,8 @@ void meow_coroutine_server_init()
     /* 在 Zend 引擎中注册 Coroutine\Server */
     meow_coroutine_sever_ce_ptr = zend_register_internal_class(&meow_coroutine_sever_ce TSRMLS_CC);
     /* 声明 Coroutine\Server 属性 */
-    zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("sock"), -1, ZEND_ACC_PUBLIC);
+    zval *zsocket = (zval *) malloc(sizeof(zval));
+    zend_declare_property(meow_coroutine_sever_ce_ptr, ZEND_STRL("zsocket"), zsocket, ZEND_ACC_PUBLIC);
     zend_declare_property_string(meow_coroutine_sever_ce_ptr, ZEND_STRL("host"), "", ZEND_ACC_PUBLIC);
     zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("port"), -1, ZEND_ACC_PUBLIC);
     zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("errCode"), 0, ZEND_ACC_PUBLIC);

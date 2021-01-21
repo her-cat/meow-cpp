@@ -81,7 +81,7 @@ enum meow_event_type {
 /* 将 fd 和 id 编码为一个 uint_64_t 的值 */
 static inline uint64_t touint64(int fd, int id)
 {
-    uint64_t ret;
+    uint64_t ret = 0;
     ret |= ((u_int64_t) fd) << 32;
     ret |= ((u_int64_t) id);
     return ret;
