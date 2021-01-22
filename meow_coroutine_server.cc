@@ -84,8 +84,9 @@ PHP_METHOD(meow_coroutine_server, recv)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
     buf = zend_string_alloc(length, 0);
+    Socket conn(fd);
 
-    ret = meow_socket_recv(fd, ZSTR_VAL(buf), length, 0);
+    ret = conn.recv(ZSTR_VAL(buf), length);
     if (ret == 0) {
         zend_update_property_long(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("errCode"), MEOW_ERROR_SESSION_CLOSED_BY_CLIENT);
         zend_update_property_string(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("errMsg"), meow_strerror(MEOW_ERROR_SESSION_CLOSED_BY_CLIENT));
