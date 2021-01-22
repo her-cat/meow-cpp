@@ -45,12 +45,9 @@ int Socket::accept()
 {
     int connfd;
 
-    connfd = meow_socket_accept(sockfd);
-    if (connfd < 0 && errno == EAGAIN) {
-        /* 如果没有客户端连接则让出当前协程 */
-        wait_event(MEOW_EVENT_READ);
+    do {
         connfd = meow_socket_accept(sockfd);
-    }
+    } while (connfd < 0 && errno == EAGAIN && wait_event(MEOW_EVENT_READ));
 
     return connfd;
 }
@@ -60,11 +57,9 @@ ssize_t Socket::recv(void *buf, size_t len)
 {
     ssize_t ret;
 
-    ret = meow_socket_recv(sockfd, buf, len, 0);
-    if (ret < 0 && errno == EAGAIN) {
-        wait_event(MEOW_EVENT_READ);
+    do {
         ret = meow_socket_recv(sockfd, buf, len, 0);
-    }
+    } while (ret < 0 && errno == EAGAIN && wait_event(MEOW_EVENT_READ));
 
     return ret;
 }
@@ -74,11 +69,9 @@ ssize_t Socket::send(const void *buf, size_t len)
 {
     ssize_t ret;
 
-    ret = meow_socket_send(sockfd, buf, len, 0);
-    if (ret < 0 && errno == EAGAIN) {
-        wait_event(MEOW_EVENT_WRITE);
+    do {
         ret = meow_socket_send(sockfd, buf, len, 0);
-    }
+    } while (ret < 0 && errno == EAGAIN && wait_event(MEOW_EVENT_WRITE));
 
     return ret;
 }
