@@ -53,10 +53,16 @@ int meow_socket_listen(int sock)
 /* 接受新连接 */
 int meow_socket_accept(int sock)
 {
+    int conn_fd;
     struct sockaddr_in sa;
     socklen_t len = sizeof(sa);
 
-    return accept(sock, (struct sockaddr *) &sa, &len);
+    conn_fd = accept(sock, (struct sockaddr *) &sa, &len);
+    if (conn_fd < 0 && errno != EAGAIN) {
+        meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno));
+    }
+
+    return conn_fd;
 }
 
 /* 接收数据 */

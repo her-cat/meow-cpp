@@ -58,11 +58,13 @@ PHP_METHOD(meow_coroutine_server, __construct)
 /* 接受新连接 */
 PHP_METHOD(meow_coroutine_server, accept)
 {
-    zval *sock;
     int conn_fd;
+    zval *zsocket;
+    Socket *socket;
 
-    sock = meow_zend_read_property(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("sock"), 0);
-    conn_fd = meow_socket_accept(Z_LVAL_P(sock));
+    zsocket = meow_zend_read_property(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("zsocket"), 0);
+    socket = (Socket *) Z_PTR_P(zsocket);
+    conn_fd = socket->accept();
 
     RETURN_LONG(conn_fd)
 }

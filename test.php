@@ -3,6 +3,12 @@
 use Meow\Co;
 use function Meow\go;
 
-$server = new Meow\Coroutine\Server("127.0.0.1", 8080);
+go(function () {
+    $server = new Meow\Coroutine\Server("127.0.0.1", 8080);
+    while (true) {
+        $conn_fd = $server->accept();
+        var_dump($conn_fd);
+    }
+});
 
-var_dump($server);
+Co::scheduler();

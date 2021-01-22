@@ -90,6 +90,10 @@ bool Socket::wait_event(int event)
     Coroutine *coroutine;
     epoll_event *ev;
 
+    if (!MEOW_G(poll)) {
+        init_meow_poll();
+    }
+
     coroutine = Coroutine::get_current();
     id = coroutine->get_cid();
     ev = MEOW_G(poll)->events;
