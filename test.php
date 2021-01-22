@@ -6,18 +6,15 @@ use function Meow\go;
 go(function () {
     $server = new Meow\Coroutine\Server("127.0.0.1", 8080);
     while (true) {
-        $conn_fd = $server->accept();
-        if ($conn_fd < 0) {
-            break;
-        }
-
-        while (true) {
-            $msg = $server->recv($conn_fd);
-            if ($msg == false) {
-                break;
+        go(function ($conn_fd) use ($server) {
+            while (true) {
+                $msg = $server->recv($conn_fd);
+                if ($msg == false) {
+                    break;
+                }
+                $server->send($conn_fd, $msg);
             }
-            var_dump($msg);
-        }
+        }, $server->accept());
     }
 });
 

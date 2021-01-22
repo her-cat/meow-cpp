@@ -116,7 +116,9 @@ PHP_METHOD(meow_coroutine_server, send)
         Z_PARAM_STRING(data, length)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
-    ret = meow_socket_send(fd, data, length, 0);
+    Socket conn(fd);
+
+    ret = conn.send(data, length);
     if (ret < 0) {
         php_error_docref(NULL, E_WARNING, "send error");
         RETURN_FALSE
