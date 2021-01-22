@@ -5,6 +5,45 @@
 using meow::coroutine::Socket;
 using meow::Coroutine;
 
+char *Socket::read_buffer = nullptr;
+size_t Socket::read_buffer_len = 0;
+char *Socket::write_buffer = nullptr;
+size_t Socket::write_buffer_len = 0;
+
+/* 初始化读缓冲区 */
+int Socket::init_read_buffer()
+{
+    if (read_buffer) {
+        return 0;
+    }
+
+    read_buffer_len = 65536;
+    read_buffer = (char *) malloc(read_buffer_len);
+
+    if (read_buffer == NULL) {
+        return -1;
+    }
+
+    return 0;
+}
+
+/* 初始化写缓冲区 */
+int Socket::init_write_buffer()
+{
+    if (write_buffer) {
+        return 0;
+    }
+
+    write_buffer_len = 65536;
+    write_buffer = (char *) malloc(read_buffer_len);
+
+    if (write_buffer == NULL) {
+        return -1;
+    }
+
+    return 0;
+}
+
 /* Socket 构造函数 */
 Socket::Socket(int domain, int type, int protocol)
 {

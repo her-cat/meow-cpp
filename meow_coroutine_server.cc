@@ -75,7 +75,6 @@ PHP_METHOD(meow_coroutine_server, recv)
     int ret;
     zend_long fd;
     zend_long length = 65536;
-    zend_string *buf;
 
     ZEND_PARSE_PARAMETERS_START(1, 2)
         Z_PARAM_LONG(fd)
@@ -83,10 +82,11 @@ PHP_METHOD(meow_coroutine_server, recv)
         Z_PARAM_LONG(length)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
-    buf = zend_string_alloc(length, 0);
+    Socket::init_read_buffer();
+
     Socket conn(fd);
 
-    ret = conn.recv(ZSTR_VAL(buf), length);
+    ret = conn.recv(Socket::read_buffer, Socket::read_buffer_len);
     if (ret == 0) {
         zend_update_property_long(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("errCode"), MEOW_ERROR_SESSION_CLOSED_BY_CLIENT);
         zend_update_property_string(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("errMsg"), meow_strerror(MEOW_ERROR_SESSION_CLOSED_BY_CLIENT));
@@ -98,9 +98,9 @@ PHP_METHOD(meow_coroutine_server, recv)
         RETURN_FALSE
     }
 
-    ZSTR_VAL(buf)[ret] = '\0';
+    Socket::read_buffer[ret] = '\0';
 
-    RETURN_STR(buf)
+    RETURN_STRING(Socket::read_buffer)
 }
 
 /* 发送数据 */
