@@ -192,7 +192,9 @@ int PHPCoroutine::scheduler()
 
             fromuint64(u64, &fd, &id);
             coroutine = Coroutine::get_by_cid(id);
-            coroutine->resume();
+            if (coroutine) {
+                coroutine->resume();
+            }
         }
 
         /* 修改当前的时间 */
