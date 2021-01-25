@@ -1,10 +1,42 @@
 #include "php_meow.h"
 
+/* 定义 meow_coroutine_create() 函数的参数 */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_create, 0, 0, 1)
     ZEND_ARG_CALLABLE_INFO(0, func, 0)
 ZEND_END_ARG_INFO()
 
+/* 定义无参函数的参数 */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_void, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+/* 创建协程 */
 PHP_FUNCTION(meow_coroutine_create);
+
+/* 调度器模块初始化 */
+PHP_FUNCTION(meow_event_init)
+{
+    int ret;
+
+    ret = meow_event_init();
+    if (ret < 0) {
+        RETURN_FALSE
+    }
+
+    RETURN_TRUE
+}
+
+/* 调度器 */
+PHP_FUNCTION(meow_event_wait)
+{
+    int ret;
+
+    ret = meow_event_wait();
+    if (ret < 0) {
+        RETURN_FALSE
+    }
+
+    RETURN_TRUE
+}
 
 /* 模块初始化阶段 */
 PHP_MINIT_FUNCTION(meow)
@@ -46,6 +78,8 @@ PHP_MINFO_FUNCTION(meow)
 const zend_function_entry meow_functions[] ={
         PHP_FE(meow_coroutine_create, arginfo_meow_coroutine_create)
         ZEND_NS_FALIAS("Meow", go, meow_coroutine_create, arginfo_meow_coroutine_create)
+        PHP_FE(meow_event_init, arginfo_meow_coroutine_void)
+        PHP_FE(meow_event_wait, arginfo_meow_coroutine_void)
         PHP_FE_END
 };
 

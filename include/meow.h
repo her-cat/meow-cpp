@@ -78,6 +78,13 @@ enum meow_event_type {
     MEOW_EVENT_ERROR    = 1u << 11,
 };
 
+int meow_poll_init();
+int meow_poll_free();
+
+int meow_event_init();
+int meow_event_wait();
+int meow_event_free();
+
 /* 将 fd 和 id 编码为一个 uint_64_t 的值 */
 static inline uint64_t touint64(int fd, int id)
 {
@@ -92,27 +99,6 @@ static inline void fromuint64(uint64_t v, int *fd, int *id)
 {
     *id = (int) (v >> 32);
     *id = (int) (v & 0xffffffff);
-}
-
-/* 初始化全局变量 poll */
-static inline void init_meow_poll()
-{
-    size_t size;
-
-    MEOW_G(poll) = (meow_poll_t *) malloc(sizeof(meow_poll_t));
-
-    MEOW_G(poll)->epollfd = epoll_create(256);
-    MEOW_G(poll)->size = 16;
-    size = sizeof(struct epoll_event) * MEOW_G(poll)->size;
-    MEOW_G(poll)->events = (struct epoll_event *) malloc(size);
-    memset(MEOW_G(poll)->events, 0, size);
-}
-
-/* 释放全局变量 poll */
-static inline void free_meow_poll()
-{
-    free(MEOW_G(poll)->events);
-    free(MEOW_G(poll));
 }
 
 #endif /* MEOW_H */

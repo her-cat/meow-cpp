@@ -3,13 +3,20 @@
 use Meow\Co;
 use function Meow\go;
 
+meow_event_init();
+
 go(function () {
-    $server = new Meow\Coroutine\Server("127.0.0.1", 8080);
-    while (true) {
-        $conn_fd = $server->accept();
-        var_dump($conn_fd);
-        $server->close($conn_fd);
-    }
+    $cid = Co::getCid();
+    var_dump(1);
+    Co::sleep(1);
+    var_dump(2);
 });
 
-Co::scheduler();
+go(function () {
+    $cid = Co::getCid();
+    var_dump(3);
+    Co::sleep(1);
+    var_dump(4);
+});
+
+meow_event_wait();

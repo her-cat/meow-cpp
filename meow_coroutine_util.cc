@@ -153,16 +153,6 @@ PHP_METHOD(meow_coroutine_util, sleep)
     RETURN_TRUE
 }
 
-/* 协程调度器 */
-PHP_METHOD(meow_coroutine_util, scheduler)
-{
-    if (PHPCoroutine::scheduler() < 0) {
-        RETURN_FALSE
-    }
-
-    RETURN_TRUE
-}
-
 /* 定义 Coroutine 的方法列表 */
 const zend_function_entry meow_coroutine_util_methods[] =
 {
@@ -173,7 +163,6 @@ const zend_function_entry meow_coroutine_util_methods[] =
     PHP_ME(meow_coroutine_util, isExist, arginfo_meow_coroutine_isExist, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(meow_coroutine_util, defer, arginfo_meow_coroutine_defer, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(meow_coroutine_util, sleep, arginfo_meow_coroutine_sleep, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(meow_coroutine_util, scheduler, arginfo_meow_coroutine_void, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_FE_END
 };
 

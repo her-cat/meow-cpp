@@ -9,15 +9,6 @@
 #define DEFAULT_PHP_STACK_PAGE_SIZE 8192
 #define php_coroutine_task_t_SLOT ((int)((ZEND_MM_ALIGNED_SIZE(sizeof(php_coroutine_task_t)) + ZEND_MM_ALIGNED_SIZE(sizeof(zval)) - 1) / ZEND_MM_ALIGNED_SIZE(sizeof(zval))))
 
-typedef enum {
-    UV_CLOCK_PRECISE = 0,  /* Use the highest resolution clock available. */
-    UV_CLOCK_FAST = 1      /* Use the fastest clock with <= 1ms granularity. */
-} uv_clocktype_t;
-
-extern "C" void uv__run_timers(uv_loop_t *loop);
-extern "C" uint64_t uv__hrtime(uv_clocktype_t type);
-extern "C" uint64_t uv__next_timeout(const uv_loop_t *loop);
-
 typedef struct php_coroutine_arg_s php_coroutine_arg_t;
 typedef struct php_function_s php_function_t;
 typedef struct php_coroutine_task_s php_coroutine_task_t;
@@ -57,7 +48,6 @@ public:
     static long create(zend_fcall_info_cache *fci_cache, uint32_t argc, zval *argv);
     static void defer(php_function_t *func);
     static int sleep(double seconds);
-    static int scheduler();
 
 protected:
     static php_coroutine_task_t main_task;
