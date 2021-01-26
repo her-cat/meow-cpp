@@ -1,5 +1,7 @@
+#include <iostream>
 #include "context.h"
 #include "meow.h"
+#include "log.h"
 
 using meow::Context;
 
@@ -7,8 +9,14 @@ Context::Context(size_t stack_size, coroutine_function_t fn, void *private_data)
         stack_size_(stack_size), fn_(fn), private_data_(private_data)
 {
     swap_ctx_ = nullptr;
-    /* 创建一个 C 栈（实际上是从堆中分配的内存） */
-    stack_ = (char *) malloc(stack_size_);
+
+    try {
+        /* 创建一个 C 栈（实际上是从堆中分配的内存） */
+        stack_ = new char[stack_size_]();
+    } catch (const std::bad_alloc &e) {
+        meow_error("%s", e.what())
+    }
+
     /* 将堆模拟成栈 */
     void *sp = (void *) ((char *) stack_ + stack_size_);
     /* 将 context_func 回调函数和自定义的堆栈填充到 ctx_ 中 */

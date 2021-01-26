@@ -6,17 +6,15 @@ use function Meow\go;
 meow_event_init();
 
 go(function () {
-    $cid = Co::getCid();
-    var_dump(1);
+    var_dump(Co::getCid());
     Co::sleep(1);
-    var_dump(2);
+    var_dump(Co::getCid());
 });
 
 go(function () {
-    $cid = Co::getCid();
-    var_dump(3);
+    var_dump(Co::getCid());
     Co::sleep(1);
-    var_dump(4);
+    var_dump(Co::getCid());
 });
 
 meow_event_wait();

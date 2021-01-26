@@ -18,10 +18,11 @@ int Socket::init_read_buffer()
     }
 
     read_buffer_len = 65536;
-    read_buffer = (char *) malloc(read_buffer_len);
 
-    if (read_buffer == NULL) {
-        return -1;
+    try {
+        read_buffer = new char[read_buffer_len]();
+    } catch (const std::exception &e) {
+        meow_error("%s", e.what())
     }
 
     return 0;
@@ -35,10 +36,11 @@ int Socket::init_write_buffer()
     }
 
     write_buffer_len = 65536;
-    write_buffer = (char *) malloc(read_buffer_len);
 
-    if (write_buffer == NULL) {
-        return -1;
+    try {
+        write_buffer = new char[write_buffer_len]();
+    } catch (const std::exception &e) {
+        meow_error("%s", e.what())
     }
 
     return 0;
@@ -128,9 +130,7 @@ bool Socket::wait_event(int event)
     Coroutine *coroutine;
     epoll_event *ev;
 
-    if (!MEOW_G(poll)) {
-        init_meow_poll();
-    }
+    meow_event_init();
 
     coroutine = Coroutine::get_current();
     id = coroutine->get_cid();
@@ -140,10 +140,17 @@ bool Socket::wait_event(int event)
     ev->data.u64 = touint64(sockfd, id);
     /* 将事件注册到全局的 epollfd 上 */
     epoll_ctl(MEOW_G(poll)->epollfd, EPOLL_CTL_ADD, sockfd, ev);
+    /* 事件数量 + 1 */
+    MEOW_G(poll)->event_num++;
 
     /* 让出当前协程 */
     coroutine->yield();
 
+    /* 协程被恢复后，删除上面新增的事件 */
+    if (epoll_ctl(MEOW_G(poll)->epollfd, EPOLL_CTL_DEL, sockfd, NULL) < 0) {
+        meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno));
+        return false;
+    }
+
     return true;
 }
-

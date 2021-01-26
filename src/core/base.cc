@@ -21,25 +21,28 @@ extern "C" int uv__next_timeout(const uv_loop_t* loop);
 /* 初始化全局变量 poll */
 int meow_poll_init()
 {
-    size_t size;
-
-    MEOW_G(poll) = (meow_poll_t *) malloc(sizeof(meow_poll_t));
-    if (MEOW_G(poll) == NULL) {
-        meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno))
-        return -1;
+    try {
+        MEOW_G(poll) = new meow_poll_t();
+    } catch (const std::exception &e) {
+        meow_error("%s", e.what())
     }
 
     MEOW_G(poll)->epollfd = epoll_create(256);
     if (MEOW_G(poll)->epollfd < 0) {
         meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno))
-        free(MEOW_G(poll));
+        delete MEOW_G(poll);
+        MEOW_G(poll) = nullptr;
         return -1;
     }
 
     MEOW_G(poll)->size = 16;
-    size = sizeof(struct epoll_event) * MEOW_G(poll)->size;
-    MEOW_G(poll)->events = (struct epoll_event *) malloc(size);
-    memset(MEOW_G(poll)->events, 0, size);
+    MEOW_G(poll)->event_num = 0;
+
+    try {
+        MEOW_G(poll)->events = new epoll_event[MEOW_G(poll)->size]();
+    } catch (const std::bad_alloc &e) {
+        meow_error("%s", e.what())
+    }
 
     return 0;
 }
@@ -47,8 +50,15 @@ int meow_poll_init()
 /* 释放全局变量 poll */
 int meow_poll_free()
 {
-    free(MEOW_G(poll)->events);
-    free(MEOW_G(poll));
+    if (close(MEOW_G(poll)->epollfd) < 0) {
+        meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno))
+    }
+
+    delete[] MEOW_G(poll)->events;
+    MEOW_G(poll)->events = nullptr;
+    delete MEOW_G(poll);
+    MEOW_G(poll) = nullptr;
+
     return 0;
 }
 
@@ -59,6 +69,8 @@ int meow_event_init()
         meow_poll_init();
     }
 
+    MEOW_G(running) = 1;
+
     return 0;
 }
 
@@ -67,11 +79,9 @@ int meow_event_wait()
 {
     uv_loop_t *loop = uv_default_loop();
 
-    if (!MEOW_G(poll)) {
-        meow_error("Need to call st_event_init first.");
-    }
+    meow_event_init();
 
-    while (loop->stop_flag == 0) {
+    while (MEOW_G(running) > 0) {
         int n, timeout;
         epoll_event *events;
 
@@ -102,9 +112,9 @@ int meow_event_wait()
          * 如果定时器节点的时间大于 loop->time，就会指定这个定时器节点的回调函数 */
         uv__run_timers(loop);
 
-        /* 没有未执行的定时器并且 poll 已经被释放 */
-        if (uv__next_timeout(loop) < 0 && !MEOW_G(poll)) {
-            uv_stop(loop);
+        /* 没有未执行的定时器并且事件数量为 0 */
+        if (uv__next_timeout(loop) < 0 && MEOW_G(poll)->event_num == 0) {
+            MEOW_G(running) = 0;
         }
     }
 
@@ -117,5 +127,7 @@ int meow_event_wait()
 int meow_event_free()
 {
     meow_poll_free();
+    MEOW_G(running) = 0;
+
     return 0;
 }

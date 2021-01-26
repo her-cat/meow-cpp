@@ -57,11 +57,13 @@
 typedef struct {
     int epollfd; /* 保存创建的 epoll fd */
     int size; /* events 数组的大小 */
+    int event_num; /* 事件数 */
     struct epoll_event *events; /* 保存 epoll 返回的事件 */
 } meow_poll_t;
 
 /* Meow 全局变量 */
 MEOW_GLOBALS_STRUCT_BEGIN(meow)
+    int running;
     meow_poll_t *poll;
 MEOW_GLOBALS_STRUCT_END(meow)
 
