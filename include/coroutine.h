@@ -1,7 +1,6 @@
 #ifndef MEOW_COROUTINE_H
 #define MEOW_COROUTINE_H
 
-#include <uv.h>
 #include <unordered_map>
 #include "context.h"
 

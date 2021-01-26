@@ -1,22 +1,15 @@
-#include <uv.h>
 #include "coroutine.h"
+#include "timer.h"
 #include "meow.h"
 #include "log.h"
 
 using meow::Coroutine;
+using meow::Timer;
+using meow::TimerManager;
+using meow::timer_manager;
 
 /* 定义 Meow 全局变量 */
 MEOW_GLOBALS_DECLARE(meow)
-
-typedef enum
-{
-    UV_CLOCK_PRECISE = 0,  /* Use the highest resolution clock available. */
-    UV_CLOCK_FAST = 1      /* Use the fastest clock with <= 1ms granularity. */
-} uv_clocktype_t;
-
-extern "C" void uv__run_timers(uv_loop_t* loop);
-extern "C" uint64_t uv__hrtime(uv_clocktype_t type);
-extern "C" int uv__next_timeout(const uv_loop_t* loop);
 
 /* 初始化全局变量 poll */
 int meow_poll_init()
@@ -77,8 +70,6 @@ int meow_event_init()
 /* 调度器 */
 int meow_event_wait()
 {
-    uv_loop_t *loop = uv_default_loop();
-
     meow_event_init();
 
     while (MEOW_G(running) > 0) {
@@ -86,7 +77,7 @@ int meow_event_wait()
         epoll_event *events;
 
         /* 获取超时时间 */
-        timeout = uv__next_timeout(loop);
+        timeout = timer_manager.get_next_timeout();
 
         events = MEOW_G(poll)->events;
         /* 通过 epoll_wait 让进程进入休眠，
@@ -106,14 +97,10 @@ int meow_event_wait()
             }
         }
 
-        /* 修改当前的时间 */
-        loop->time = uv__hrtime(UV_CLOCK_FAST) / 1000000;
-        /* 运行定时器，遍历整个定时器堆，让每个定时器节点时间和 loop->time 进行比较，
-         * 如果定时器节点的时间大于 loop->time，就会指定这个定时器节点的回调函数 */
-        uv__run_timers(loop);
+        timer_manager.run_timers();
 
         /* 没有未执行的定时器并且事件数量为 0 */
-        if (uv__next_timeout(loop) < 0 && MEOW_G(poll)->event_num == 0) {
+        if (timer_manager.get_next_timeout() < 0 && MEOW_G(poll)->event_num == 0) {
             MEOW_G(running) = 0;
         }
     }

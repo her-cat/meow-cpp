@@ -41,6 +41,8 @@
 #include <sys/stat.h>
 #include <sys/epoll.h>
 
+#include <queue>
+
 #define MEOW_GLOBALS_STRUCT(name)       name##_globals_s
 #define MEOW_GLOBALS_TYPE(name)         name##_globals_t
 #define MEOW_GLOBALS(name)              name##_globals
