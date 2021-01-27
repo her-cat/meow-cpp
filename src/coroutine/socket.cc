@@ -152,5 +152,8 @@ bool Socket::wait_event(int event)
         return false;
     }
 
+    /* 事件数量 - 1 */
+    MEOW_G(poll)->event_num--;
+
     return true;
 }
