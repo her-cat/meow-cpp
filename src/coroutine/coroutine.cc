@@ -7,6 +7,8 @@ Coroutine *Coroutine::current = nullptr;
 size_t Coroutine::stack_size = DEFAULT_C_STACK_SIZE;
 long Coroutine::last_cid = 0;
 std::unordered_map<long, Coroutine *> Coroutine::coroutines;
+meow_coroutine_swap_function_t Coroutine::on_yield = nullptr;
+meow_coroutine_swap_function_t Coroutine::on_resume = nullptr;
 
 /* 创建协程 */
 long Coroutine::create(coroutine_function_t fn, void *args)
@@ -41,6 +43,7 @@ Coroutine *Coroutine::get_current()
 /* 让出协程 */
 void Coroutine::yield()
 {
+    on_yield(task);
     /* 设置上一个协程作为当前正在运行的协程 */
     current = origin;
     /* 切换协程上下文 */
@@ -50,6 +53,7 @@ void Coroutine::yield()
 /* 恢复协程 */
 void Coroutine::resume()
 {
+    on_resume(task);
     origin = current;
     current = this;
     ctx.swap_in();
@@ -83,4 +87,16 @@ int Coroutine::sleep(double seconds)
     coroutine->yield();
 
     return 0;
+}
+
+/* 设置让出协程时的回调函数 */
+void Coroutine::set_on_yield(meow_coroutine_swap_function_t function)
+{
+    on_yield = function;
+}
+
+/* 设置恢复协程时的回调函数 */
+void Coroutine::set_on_resume(meow_coroutine_swap_function_t function)
+{
+    on_resume = function;
 }

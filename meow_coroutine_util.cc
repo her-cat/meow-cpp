@@ -171,6 +171,7 @@ zend_class_entry *meow_coroutine_ce_ptr;
 
 void meow_coroutine_util_init()
 {
+    PHPCoroutine::init();
     /* 初始化 Coroutine */
     INIT_NS_CLASS_ENTRY(meow_coroutine_ce, "Meow", "Coroutine", meow_coroutine_util_methods);
     /* 在 Zend 引擎中注册 Coroutine */

@@ -162,3 +162,45 @@ int PHPCoroutine::sleep(double seconds)
 {
     return Coroutine::sleep(seconds);
 }
+
+/* 当协程被让出时的回调函数 */
+void PHPCoroutine::on_yield(void *arg)
+{
+    php_coroutine_task_t *task = (php_coroutine_task_t *) arg;
+    php_coroutine_task_t *origin_task = get_origin_task(task);
+
+    save_task(task);
+    restore_task(origin_task);
+}
+
+/* 当协程被恢复时的回调函数 */
+void PHPCoroutine::on_resume(void *arg)
+{
+    php_coroutine_task_t *task = (php_coroutine_task_t *) arg;
+    php_coroutine_task_t *current_task = get_task();
+
+    save_task(current_task);
+    restore_task(task);
+}
+
+/* 重载 PHP 堆栈 */
+void PHPCoroutine::restore_task(php_coroutine_task_t *task)
+{
+    restore_vm_stack(task);
+}
+
+/* 重载 PHP 堆栈 */
+inline void PHPCoroutine::restore_vm_stack(php_coroutine_task_t *task)
+{
+    EG(vm_stack_top) = task->vm_stack_top;
+    EG(vm_stack_end) = task->vm_stack_end;
+    EG(vm_stack) = task->vm_stack;
+    EG(vm_stack_page_size) = task->vm_stack_page_size;
+    EG(current_execute_data) = task->execute_data;
+}
+
+void PHPCoroutine::init()
+{
+    Coroutine::set_on_yield(on_yield);
+    Coroutine::set_on_resume(on_resume);
+}

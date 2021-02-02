@@ -45,9 +45,16 @@ namespace meow
 class PHPCoroutine
 {
 public:
+    static void init();
     static long create(zend_fcall_info_cache *fci_cache, uint32_t argc, zval *argv);
     static void defer(php_function_t *func);
     static int sleep(double seconds);
+
+    static inline php_coroutine_task_t *get_origin_task(php_coroutine_task_t *task)
+    {
+        Coroutine *coroutine = task->coroutine->get_origin();
+        return coroutine ? (php_coroutine_task_t *) coroutine->get_task() : &main_task;
+    }
 
 protected:
     static php_coroutine_task_t main_task;
@@ -58,6 +65,10 @@ protected:
     static void create_func(void *arg);
     static void vm_stack_init(void);
     static void run_defer_tasks(php_coroutine_task_t *task);
+    static void on_yield(void *arg);
+    static void on_resume(void *arg);
+    static inline void restore_task(php_coroutine_task_t *task);
+    static inline void restore_vm_stack(php_coroutine_task_t *task);
 };
 }
 
