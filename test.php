@@ -1,22 +1,12 @@
 <?php
 
-use Meow\Co;
-use function Meow\go;
+use Meow\Coroutine\Channel;
 
-meow_event_init();
+$chan = new Channel();
+var_dump($chan);
 
-go(function () {
-    $serv = new Meow\Coroutine\Server("127.0.0.1", 8080);
-    while (true) {
-        $conn_fd = $serv->accept();
+$chan = new Channel(-1);
+var_dump($chan);
 
-        go(function ($serv, $conn_fd) {
-            $buf = $serv->recv($conn_fd);
-            $response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\nContent-Length: 11\r\n\r\nhello world\r\n";
-            $serv->send($conn_fd, $response);
-            $serv->close($conn_fd);
-        }, $serv, $conn_fd);
-    }
-});
-
-meow_event_wait();
+$chan = new Channel(5);
+var_dump($chan);

@@ -43,6 +43,7 @@ PHP_MINIT_FUNCTION(meow)
 {
     meow_coroutine_util_init();
     meow_coroutine_server_init();
+    meow_coroutine_channel_init();
     return SUCCESS;
 }
 
