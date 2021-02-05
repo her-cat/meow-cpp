@@ -44,4 +44,16 @@ inline zval *meow_zend_read_property(zend_class_entry *class_ptr, zval *obj, con
     return zend_read_property(class_ptr, obj, name, len, silent, &rv);
 }
 
+inline zval *meow_malloc_zval()
+{
+    return (zval *) emalloc(sizeof(zval));
+}
+
+inline zval *meow_zval_dup(zval *val)
+{
+    zval *dup = meow_malloc_zval();
+    memcpy(dup, val, sizeof(zval));
+    return dup;
+}
+
 #endif	/* PHP_MEOW_H */

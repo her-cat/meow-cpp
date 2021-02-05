@@ -63,7 +63,12 @@ static PHP_METHOD(meow_coroutine_channel, push)
     zchan = meow_zend_read_property(meow_coroutine_channel_ce_ptr, getThis(), ZEND_STRL("zchan"), 0);
     chan = (Channel *) Z_PTR_P(zchan);
 
+    Z_TRY_ADDREF_P(zdata);
+    zdata = meow_zval_dup(zdata);
+
     if (!chan->push(zdata, timeout)) {
+        Z_TRY_DELREF_P(zdata);
+        efree(zdata);
         RETURN_FALSE
     }
 
@@ -91,6 +96,7 @@ static PHP_METHOD(meow_coroutine_channel, pop)
     }
 
     RETVAL_ZVAL(zdata, 0, 0);
+    efree(zdata);
 }
 
 /* Coroutine\Channel 的方法列表 */
