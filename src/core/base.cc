@@ -73,13 +73,23 @@ int meow_event_wait()
     meow_event_init();
 
     while (MEOW_G(running) > 0) {
-        int n, timeout;
+        int n;
+        int64_t timeout;
         epoll_event *events;
 
         /* 获取超时时间 */
         timeout = timer_manager.get_next_timeout();
-
         events = MEOW_G(poll)->events;
+
+        /* 没有未执行的定时器并且事件数量为 0 */
+        if (timeout < 0 && MEOW_G(poll)->event_num == 0) {
+            MEOW_G(running) = 0;
+            break;
+        }
+
+        /* 处理定时任务 */
+        timer_manager.run_timers();
+
         /* 通过 epoll_wait 让进程进入休眠，
          * 当有文件描述符可读/写，或到达超时时间时，进程会从休眠状态醒过来 */
         n = epoll_wait(MEOW_G(poll)->epollfd, MEOW_G(poll)->events, MEOW_G(poll)->size, timeout);
@@ -95,13 +105,6 @@ int meow_event_wait()
             if (coroutine) {
                 coroutine->resume();
             }
-        }
-
-        timer_manager.run_timers();
-
-        /* 没有未执行的定时器并且事件数量为 0 */
-        if (timer_manager.get_next_timeout() < 0 && MEOW_G(poll)->event_num == 0) {
-            MEOW_G(running) = 0;
         }
     }
 

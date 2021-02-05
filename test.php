@@ -1,12 +1,20 @@
 <?php
 
 use Meow\Coroutine\Channel;
+use function Meow\go;
+
+meow_event_init();
 
 $chan = new Channel();
-var_dump($chan);
 
-$chan = new Channel(-1);
-var_dump($chan);
+go(function () use ($chan) {
+    $ret = $chan->pop();
+    var_dump($ret);
+});
 
-$chan = new Channel(5);
-var_dump($chan);
+go(function () use ($chan) {
+    $ret = $chan->push("hello world");
+    var_dump($ret);
+});
+
+meow_event_wait();
