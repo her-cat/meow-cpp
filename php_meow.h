@@ -26,7 +26,22 @@ extern zend_module_entry meow_module_entry;
 #include "TSRM.h"
 #endif
 
-/**
+#define MEOW_SET_CLASS_CREATE(module, function) \
+    module##_ce_ptr->create_object = function
+
+#define MEOW_SET_CLASS_FREE(module, function) \
+    module##_handlers.free_obj = function
+
+#define MEOW_SET_CLASS_CREATE_AND_FREE(module, create, free) \
+    MEOW_SET_CLASS_CREATE(module, create); \
+    MEOW_SET_CLASS_FREE(module, free)
+
+/* module##_handlers.offset 保存 PHP 对象在自定义对象中的偏移量 */
+#define MEOW_SET_CLASS_OBJ(module, create, free, struct_t, field) \
+    MEOW_SET_CLASS_CREATE_AND_FREE(module, create, free); \
+    module##_handlers.offset = XtOffsetOf(struct_t, field)
+
+/**s
  * Declare any global variables you may need between the BEGIN and END macros here
  */
 ZEND_BEGIN_MODULE_GLOBALS(meow)
