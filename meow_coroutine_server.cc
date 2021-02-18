@@ -166,13 +166,13 @@ static const zend_function_entry meow_coroutine_server_methods[] =
 
 void meow_coroutine_server_init()
 {
+    zval zsocket;
     /* 初始化 Coroutine\Server */
     INIT_NS_CLASS_ENTRY(meow_coroutine_sever_ce, "Meow", "Coroutine\\Server", meow_coroutine_server_methods)
     /* 在 Zend 引擎中注册 Coroutine\Server */
     meow_coroutine_sever_ce_ptr = zend_register_internal_class(&meow_coroutine_sever_ce TSRMLS_CC);
     /* 声明 Coroutine\Server 属性 */
-    zval *zsocket = (zval *) malloc(sizeof(zval));
-    zend_declare_property(meow_coroutine_sever_ce_ptr, ZEND_STRL("zsocket"), zsocket, ZEND_ACC_PUBLIC);
+    zend_declare_property(meow_coroutine_sever_ce_ptr, ZEND_STRL("zsocket"), &zsocket, ZEND_ACC_PUBLIC);
     zend_declare_property_string(meow_coroutine_sever_ce_ptr, ZEND_STRL("host"), "", ZEND_ACC_PUBLIC);
     zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("port"), -1, ZEND_ACC_PUBLIC);
     zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("errCode"), 0, ZEND_ACC_PUBLIC);

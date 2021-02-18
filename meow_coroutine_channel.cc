@@ -110,12 +110,12 @@ static const zend_function_entry meow_coroutine_channel_methods[] =
 
 void meow_coroutine_channel_init()
 {
+    zval zchan;
     /* 初始化 Coroutine\Channel */
     INIT_NS_CLASS_ENTRY(meow_coroutine_channel_ce, "Meow", "Coroutine\\Channel", meow_coroutine_channel_methods);
     /* 在 Zend 引擎中注册 Coroutine\Channel */
     meow_coroutine_channel_ce_ptr = zend_register_internal_class(&meow_coroutine_channel_ce TSRMLS_CC);
     /* 声明 Coroutine\Channel 属性 */
-    zval *zchan = (zval *) malloc(sizeof(zval));
-    zend_declare_property(meow_coroutine_channel_ce_ptr, ZEND_STRL("zchan"), zchan, ZEND_ACC_PUBLIC);
+    zend_declare_property(meow_coroutine_channel_ce_ptr, ZEND_STRL("zchan"), &zchan, ZEND_ACC_PUBLIC);
     zend_declare_property_long(meow_coroutine_channel_ce_ptr, ZEND_STRL("capacity"), 1, ZEND_ACC_PUBLIC);
 }
