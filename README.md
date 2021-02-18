@@ -1,2 +1,2 @@
 # meow
-🐈 A PHP coroutine extension.
+🐈 PHP coroutine extension based on c++ development.
