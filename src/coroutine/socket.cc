@@ -157,3 +157,8 @@ bool Socket::wait_event(int event)
 
     return true;
 }
+
+int Socket::get_fd()
+{
+    return sockfd;
+}

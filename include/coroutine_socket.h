@@ -3,6 +3,8 @@
 
 #include "meow.h"
 
+#define MEOW_BAD_SOCKET ((Socket *) - 1)
+
 namespace meow
 {
 namespace coroutine
@@ -31,6 +33,7 @@ public:
     ssize_t send(const void *buf, size_t len);
     int close();
     bool wait_event(int event);
+    int get_fd();
 };
 }
 }
