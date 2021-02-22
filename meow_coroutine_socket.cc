@@ -97,8 +97,8 @@ static PHP_METHOD(meow_coroutine_socket, bind)
     coroutine_socket_t *cs;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-            Z_PARAM_ZVAL(host)
-            Z_PARAM_LONG(port)
+        Z_PARAM_ZVAL(host)
+        Z_PARAM_LONG(port)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
     cs = meow_coroutine_socket_fetch_obj(Z_OBJ_P(getThis()));
@@ -108,4 +108,141 @@ static PHP_METHOD(meow_coroutine_socket, bind)
     }
 
     RETURN_TRUE;
+}
+
+static PHP_METHOD(meow_coroutine_socket, listen)
+{
+    zend_long backlog = 512;
+    coroutine_socket_t *cs;
+
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(backlog)
+    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
+
+    cs = meow_coroutine_socket_fetch_obj(Z_OBJ_P(getThis()));
+
+    if (cs->socket->listen(backlog) < 0) {
+        RETURN_FALSE
+    }
+
+    RETURN_TRUE;
+}
+
+static PHP_METHOD(meow_coroutine_socket, accept)
+{
+    zend_object *conn;
+    Socket *conn_socket;
+    coroutine_socket_t *server_cs, *conn_cs;
+
+    server_cs = meow_coroutine_socket_fetch_obj(Z_OBJ_P(getThis()));
+
+    conn_socket = server_cs->socket->accept();
+    if (!conn_socket) {
+        RETURN_NULL()
+    }
+
+    conn = meow_coroutine_socket_create_obj(meow_coroutine_socket_ce_ptr);
+    conn_cs = meow_coroutine_socket_fetch_obj(conn);
+    conn_cs->socket = conn_socket;
+
+    ZVAL_OBJ(return_value, &(conn_cs->std));
+
+    zend_update_property_long(meow_coroutine_socket_ce_ptr, return_value, ZEND_STRL("fd"), conn_socket->get_fd());
+}
+
+static PHP_METHOD(meow_coroutine_socket, recv)
+{
+    ssize_t ret;
+    zend_long length = 65536;
+    coroutine_socket_t *conn_cs;
+
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(length)
+    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
+
+    Socket::init_read_buffer();
+
+    if (length < 0 || length > Socket::read_buffer_len) {
+        length = Socket::read_buffer_len;
+    }
+
+    conn_cs = meow_coroutine_socket_fetch_obj(Z_OBJ_P(getThis()));
+
+    ret = conn_cs->socket->recv(Socket::read_buffer, length);
+    if (ret == 0) {
+        zend_update_property_long(meow_coroutine_socket_ce_ptr, getThis(), ZEND_STRL("errCode"), MEOW_ERROR_SESSION_CLOSED_BY_CLIENT);
+        zend_update_property_string(meow_coroutine_socket_ce_ptr, getThis(), ZEND_STRL("errMsg"), meow_strerror(MEOW_ERROR_SESSION_CLOSED_BY_CLIENT));
+        RETURN_FALSE
+    } else if (ret < 0) {
+        php_error_docref(NULL, E_WARNING, "recv error");
+        RETURN_FALSE
+    }
+
+    Socket::read_buffer[ret] = '\0';
+    RETURN_STRING(Socket::read_buffer);
+}
+
+static PHP_METHOD(meow_coroutine_socket, send)
+{
+    char *data;
+    ssize_t ret;
+    size_t length;
+    coroutine_socket_t *conn_cs;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_STRING(data, length)
+    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
+
+    conn_cs = meow_coroutine_socket_fetch_obj(Z_OBJ_P(getThis()));
+
+    ret = conn_cs->socket->send(data, length);
+    if (ret < 0) {
+        php_error_docref(NULL, E_WARNING, "send error");
+        RETURN_FALSE
+    }
+
+    RETURN_LONG(ret)
+}
+
+static PHP_METHOD(meow_coroutine_socket, close)
+{
+    coroutine_socket_t *conn_cs;
+
+    conn_cs = meow_coroutine_socket_fetch_obj(Z_OBJ_P(getThis()));
+
+    if (conn_cs->socket->close() < 0) {
+        php_error_docref(NULL, E_WARNING, "close error");
+        RETURN_FALSE
+    }
+
+    delete conn_cs->socket;
+    conn_cs->socket = MEOW_BAD_SOCKET;
+
+    RETURN_TRUE
+}
+
+static const zend_function_entry meow_coroutine_socket_methods[] =
+{
+    PHP_ME(meow_coroutine_socket, __construct, arginfo_meow_coroutine_socket_construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+    PHP_ME(meow_coroutine_socket, bind, arginfo_meow_coroutine_socket_bind, ZEND_ACC_PUBLIC)
+    PHP_ME(meow_coroutine_socket, listen, arginfo_meow_coroutine_socket_listen, ZEND_ACC_PUBLIC)
+    PHP_ME(meow_coroutine_socket, accept, arginfo_meow_coroutine_socket_void, ZEND_ACC_PUBLIC)
+    PHP_ME(meow_coroutine_socket, recv, arginfo_meow_coroutine_socket_recv, ZEND_ACC_PUBLIC)
+    PHP_ME(meow_coroutine_socket, send, arginfo_meow_coroutine_socket_send, ZEND_ACC_PUBLIC)
+    PHP_ME(meow_coroutine_socket, close, arginfo_meow_coroutine_socket_void, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+void meow_coroutine_socket_init(int module_number)
+{
+    INIT_NS_CLASS_ENTRY(meow_coroutine_socket_ce, "Meow", "Coroutine\\Socket", meow_coroutine_socket_methods);
+    memcpy(&meow_coroutine_socket_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    meow_coroutine_socket_ce_ptr = zend_register_internal_class(&meow_coroutine_socket_ce TSRMLS_CC);
+    MEOW_SET_CLASS_OBJ(meow_coroutine_socket, meow_coroutine_socket_create_obj, meow_coroutine_socket_free_obj, coroutine_socket_t, std);
+
+    zend_declare_property_long(meow_coroutine_socket_ce_ptr, ZEND_STRL("fd"), -1, ZEND_ACC_PUBLIC);
+    zend_declare_property_long(meow_coroutine_socket_ce_ptr, ZEND_STRL("errCode"), 0, ZEND_ACC_PUBLIC);
+    zend_declare_property_string(meow_coroutine_socket_ce_ptr, ZEND_STRL("errMsg"), "", ZEND_ACC_PUBLIC);
 }

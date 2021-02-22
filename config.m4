@@ -57,7 +57,7 @@ dnl 根据操作系统及 CPU 类型使用对应的汇编文件
         meow.cc \
         meow_coroutine.cc \
         meow_coroutine_util.cc \
-        meow_coroutine_server.cc \
+dnl        meow_coroutine_server.cc \
         meow_coroutine_channel.cc \
         meow_coroutine_socket.cc \
         src/coroutine/coroutine.cc \

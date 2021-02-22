@@ -38,11 +38,11 @@ int meow_socket_bind(int sock, int type, char *host, int port)
 }
 
 /* 监听 socket */
-int meow_socket_listen(int sock)
+int meow_socket_listen(int sock, int backlog)
 {
     int ret;
 
-    ret = listen(sock, DEFAULT_LISTEN_BACKLOG);
+    ret = listen(sock, backlog);
     if (ret < 0) {
         meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno));
     }

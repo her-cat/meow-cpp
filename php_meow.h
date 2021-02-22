@@ -51,6 +51,7 @@ ZEND_END_MODULE_GLOBALS(meow)
 void meow_coroutine_util_init();
 void meow_coroutine_server_init();
 void meow_coroutine_channel_init();
+void meow_coroutine_socket_init(int module_number);
 
 /* 读取对象的某个属性 */
 inline zval *meow_zend_read_property(zend_class_entry *class_ptr, zval *obj, const char *name, int len, int silent)

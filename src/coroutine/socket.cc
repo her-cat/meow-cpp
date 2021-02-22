@@ -76,13 +76,13 @@ int Socket::bind(int type, char *host, int port)
 }
 
 /* 监听 socket */
-int Socket::listen()
+int Socket::listen(int backlog)
 {
-    return meow_socket_listen(sockfd);
+    return meow_socket_listen(sockfd, backlog);
 }
 
 /* 接受请求 */
-int Socket::accept()
+Socket *Socket::accept()
 {
     int connfd;
 
@@ -90,7 +90,7 @@ int Socket::accept()
         connfd = meow_socket_accept(sockfd);
     } while (connfd < 0 && errno == EAGAIN && wait_event(MEOW_EVENT_READ));
 
-    return connfd;
+    return new Socket(connfd);
 }
 
 /* 接收数据 */

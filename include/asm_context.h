@@ -2,6 +2,7 @@
 #define MEOW_ASM_CONTEXT_H
 
 #include "meow.h"
+#include "uv.h"
 
 typedef void *fcontext_t;
 
