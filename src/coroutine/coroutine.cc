@@ -9,6 +9,7 @@ long Coroutine::last_cid = 0;
 std::unordered_map<long, Coroutine *> Coroutine::coroutines;
 meow_coroutine_swap_function_t Coroutine::on_yield = nullptr;
 meow_coroutine_swap_function_t Coroutine::on_resume = nullptr;
+meow_coroutine_swap_function_t Coroutine::on_close = nullptr;
 
 /* 创建协程 */
 long Coroutine::create(coroutine_function_t fn, void *args)
@@ -59,6 +60,7 @@ void Coroutine::resume()
     ctx.swap_in();
 
     if (ctx.is_end()) {
+        on_close(task);
         cid = current->get_cid();
         /* 设置之前正在运行的协程 */
         current = origin;
@@ -99,4 +101,9 @@ void Coroutine::set_on_yield(meow_coroutine_swap_function_t function)
 void Coroutine::set_on_resume(meow_coroutine_swap_function_t function)
 {
     on_resume = function;
+}
+
+void Coroutine::set_on_close(meow_coroutine_swap_function_t function)
+{
+    on_close = function;
 }

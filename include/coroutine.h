@@ -25,6 +25,7 @@ public:
     static int sleep(double seconds);
     static void set_on_yield(meow_coroutine_swap_function_t function);
     static void set_on_resume(meow_coroutine_swap_function_t function);
+    static void set_on_close(meow_coroutine_swap_function_t function);
 
     inline long get_cid() {
         return cid;
@@ -49,6 +50,7 @@ protected:
     static long last_cid; /* 最后一个协程 id */
     static meow_coroutine_swap_function_t on_yield;
     static meow_coroutine_swap_function_t on_resume;
+    static meow_coroutine_swap_function_t on_close;
 
     Coroutine(coroutine_function_t fn, void *private_data) :
         ctx(stack_size, fn, private_data)
@@ -68,6 +70,7 @@ protected:
         ctx.swap_in();
 
         if (ctx.is_end()) {
+            on_close(task);
             cid = current->get_cid();
             /* 设置之前正在运行的协程 */
             current = origin;

@@ -203,4 +203,14 @@ void PHPCoroutine::init()
 {
     Coroutine::set_on_yield(on_yield);
     Coroutine::set_on_resume(on_resume);
+    Coroutine::set_on_close(on_close);
+}
+
+void PHPCoroutine::on_close(void *arg)
+{
+    php_coroutine_task_t *task = (php_coroutine_task_t *) arg;
+    php_coroutine_task_t *origin_task = get_origin_task(task);
+    zend_vm_stack stack = EG(vm_stack);
+    efree(stack);
+    restore_task(origin_task);
 }

@@ -67,6 +67,7 @@ protected:
     static void run_defer_tasks(php_coroutine_task_t *task);
     static void on_yield(void *arg);
     static void on_resume(void *arg);
+    static void on_close(void *arg);
     static inline void restore_task(php_coroutine_task_t *task);
     static inline void restore_vm_stack(php_coroutine_task_t *task);
 };
