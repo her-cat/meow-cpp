@@ -55,6 +55,7 @@ dnl 根据操作系统及 CPU 类型使用对应的汇编文件
 
     meow_source_file="\
         meow.cc \
+        meow_runtime.cc \
         meow_coroutine.cc \
         meow_coroutine_util.cc \
 dnl        meow_coroutine_server.cc \

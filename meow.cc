@@ -45,6 +45,7 @@ PHP_MINIT_FUNCTION(meow)
 //    meow_coroutine_server_init();
     meow_coroutine_channel_init();
     meow_coroutine_socket_init(module_number);
+    meow_runtime_init();
     return SUCCESS;
 }
 
