@@ -1,180 +1,193 @@
-#include "meow_coroutine_server.h"
+#include "meow_coroutine_socket.h"
+#include "meow_coroutineI_server.h"
 
+using meow::PHPCoroutine;
 using meow::coroutine::Socket;
+using meow::phpcoroutine::Server;
+
+Server::Server(char *host, int port)
+{
+    socket = new Socket(AF_INET, SOCK_STREAM, 0);
+
+    if(socket->bind(MEOW_SOCK_TCP, host, port) < 0) {
+        meow_warn("Error has occurred: (errno %d) %s", errno, strerror(errno))
+        return;
+    }
+
+    socket->listen(DEFAULT_LISTEN_BACKLOG);
+}
+
+Server::~Server()
+{
+
+}
+
+bool Server::start()
+{
+    zval zsocket;
+    running = true;
+
+    while (running) {
+        Socket *conn = socket->accept();
+        if(!conn) {
+            return false;
+        }
+
+        php_meow_init_socket_obj(&zsocket, conn);
+        PHPCoroutine::create(&(handler->fcc), 1, &zsocket);
+        zval_dtor(&zsocket);
+    }
+
+    return true;
+}
+
+bool Server::shutdown()
+{
+    running = false;
+    return true;
+}
+
+void Server::set_handler(php_function_t *_handler)
+{
+    handler = _handler;
+}
+
+php_function_t * Server::get_handler()
+{
+    return handler;
+}
 
 /**
- * Define zend class entry.
+ * Define zend class entry
  */
-zend_class_entry meow_coroutine_sever_ce;
-zend_class_entry *meow_coroutine_sever_ce_ptr;
+zend_class_entry meow_coroutine_server_ce;
+zend_class_entry *meow_coroutine_server_ce_ptr;
 
-/* 定义无参参数 */
+static zend_object_handlers meow_coroutine_server_handlers;
+
+typedef struct {
+    Server *server;
+    zend_object std;
+} coroutine_server_t;
+
+static coroutine_server_t *meow_coroutine_server_fetch_obj(zend_object *obj)
+{
+    return (coroutine_server_t *)((char *)obj - meow_coroutine_server_handlers.offset);
+}
+
+static zend_object *meow_coroutine_server_create_obj(zend_class_entry *ce)
+{
+    coroutine_server_t *cs = (coroutine_server_t *) ecalloc(1, sizeof(coroutine_server_t) + zend_object_properties_size(ce));
+    /* 初始化对象 */
+    zend_object_std_init(&cs->std, ce);
+    /* 初始化对象的属性 */
+    object_properties_init(&cs->std, ce);
+    cs->std.handlers = &meow_coroutine_server_handlers;
+    return &cs->std;
+}
+
+static void meow_coroutine_server_free_obj(zend_object *obj)
+{
+    coroutine_server_t *cs = meow_coroutine_server_fetch_obj(obj);
+
+    if (cs->server) {
+        php_function_t *handler = cs->server->get_handler();
+        if (handler) {
+            efree(handler);
+            cs->server->set_handler(nullptr);
+        }
+        delete cs->server;
+    }
+
+    zend_object_std_dtor(&cs->std);
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_void, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
-/* 定义 Coroutine\Server::__construct 方法的参数 */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_construct, 0, 0, 2)
     ZEND_ARG_INFO(0, host)
     ZEND_ARG_INFO(0, port)
 ZEND_END_ARG_INFO()
 
-/* 定义 Coroutine\Server::recv 方法的参数 */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_recv, 0, 0, 2)
-    ZEND_ARG_INFO(0, fd)
-    ZEND_ARG_INFO(0, length)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_set_handler, 0, 0, 1)
+    ZEND_ARG_CALLABLE_INFO(0, func,  0)
 ZEND_END_ARG_INFO()
 
-/* 定义 Coroutine\Server::send 方法的参数 */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_send, 0, 0, 2)
-    ZEND_ARG_INFO(0, fd)
-    ZEND_ARG_INFO(0, data)
-ZEND_END_ARG_INFO()
-
-/* 定义 Coroutine\Server::close 方法的参数 */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_server_close, 0, 0, 1)
-    ZEND_ARG_INFO(0, fd)
-ZEND_END_ARG_INFO()
-
-/* 构造函数 */
 PHP_METHOD(meow_coroutine_server, __construct)
 {
-    zval *host;
     zend_long port;
-    zval zsocket;
-    Socket *socket;
+    coroutine_server_t *cs;
+    zval *zhost;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-        Z_PARAM_ZVAL(host)
-        Z_PARAM_LONG(port)
+            Z_PARAM_ZVAL(zhost)
+            Z_PARAM_LONG(port)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
-    socket = new Socket(AF_INET, SOCK_STREAM, 0);
-    socket->bind(MEOW_SOCK_TCP, Z_STRVAL_P(host), port);
-    socket->listen();
+    cs = (coroutine_server_t *) meow_coroutine_server_fetch_obj(Z_OBJ_P(getThis()));
+    cs->server = new Server(Z_STRVAL_P(zhost), port);
 
-    ZVAL_PTR(&zsocket, socket);
-
-    /* 更新 Coroutine\Server 属性 */
-    zend_update_property(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("zsocket"), &zsocket);
-    zend_update_property_string(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("host"), Z_STRVAL_P(host));
-    zend_update_property_long(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("port"), port);
+    zend_update_property_string(meow_coroutine_server_ce_ptr, getThis(), ZEND_STRL("host"), Z_STRVAL_P(zhost));
+    zend_update_property_long(meow_coroutine_server_ce_ptr, getThis(), ZEND_STRL("port"), port);
 }
 
-/* 接受新连接 */
-PHP_METHOD(meow_coroutine_server, accept)
+PHP_METHOD(meow_coroutine_server, start)
 {
-    int conn_fd;
-    zval *zsocket;
-    Socket *socket;
+    coroutine_server_t *cs;
 
-    zsocket = meow_zend_read_property(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("zsocket"), 0);
-    socket = (Socket *) Z_PTR_P(zsocket);
-    conn_fd = socket->accept();
-
-    RETURN_LONG(conn_fd)
-}
-
-/* 接收数据 */
-PHP_METHOD(meow_coroutine_server, recv)
-{
-    int ret;
-    zend_long fd;
-    zend_long length = 65536;
-
-    ZEND_PARSE_PARAMETERS_START(1, 2)
-        Z_PARAM_LONG(fd)
-        Z_PARAM_OPTIONAL
-        Z_PARAM_LONG(length)
-    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
-
-    Socket::init_read_buffer();
-
-    Socket conn(fd);
-
-    ret = conn.recv(Socket::read_buffer, Socket::read_buffer_len);
-    if (ret == 0) {
-        zend_update_property_long(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("errCode"), MEOW_ERROR_SESSION_CLOSED_BY_CLIENT);
-        zend_update_property_string(meow_coroutine_sever_ce_ptr, getThis(), ZEND_STRL("errMsg"), meow_strerror(MEOW_ERROR_SESSION_CLOSED_BY_CLIENT));
-        RETURN_FALSE
+    cs = (coroutine_server_t *) meow_coroutine_server_fetch_obj(Z_OBJ_P(getThis()));
+    if (!cs->server->start()) {
+        RETURN_FALSE;
     }
-
-    if (ret < 0) {
-        php_error_docref(NULL, E_WARNING, "recv error");
-        RETURN_FALSE
-    }
-
-    Socket::read_buffer[ret] = '\0';
-
-    RETURN_STRING(Socket::read_buffer)
+    RETURN_TRUE;
 }
 
-/* 发送数据 */
-PHP_METHOD(meow_coroutine_server, send)
+PHP_METHOD(meow_coroutine_server, shutdown)
 {
-    ssize_t ret;
-    zend_long fd;
-    char *data;
-    size_t length;
+    coroutine_server_t *cs;
 
-    ZEND_PARSE_PARAMETERS_START(2, 2)
-        Z_PARAM_LONG(fd)
-        Z_PARAM_STRING(data, length)
-    ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
-
-    Socket conn(fd);
-
-    ret = conn.send(data, length);
-    if (ret < 0) {
-        php_error_docref(NULL, E_WARNING, "send error");
-        RETURN_FALSE
+    cs = (coroutine_server_t *) meow_coroutine_server_fetch_obj(Z_OBJ_P(getThis()));
+    if (!cs->server->shutdown()) {
+        RETURN_FALSE;
     }
-
-    RETURN_LONG(ret)
+    RETURN_TRUE;
 }
 
-/* 关闭 socket */
-PHP_METHOD(meow_coroutine_server, close)
+PHP_METHOD(meow_coroutine_server, set_handler)
 {
-    int ret;
-    zend_long fd;
+    coroutine_server_t *cs;
+    php_function_t *handler;
+
+    handler = (php_function_t *)emalloc(sizeof(php_function_t));
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-        Z_PARAM_LONG(fd)
+        Z_PARAM_FUNC(handler->fci, handler->fcc)
     ZEND_PARSE_PARAMETERS_END_EX(RETURN_FALSE);
 
-    Socket sock(fd);
-    ret = sock.close();
-
-    if (ret < 0) {
-        php_error_docref(NULL, E_WARNING, "close error");
-        RETURN_FALSE
-    }
-
-    RETURN_LONG(ret);
+    cs = (coroutine_server_t *)meow_coroutine_server_fetch_obj(Z_OBJ_P(getThis()));
+    cs->server->set_handler(handler);
 }
 
-/* Coroutine\Server 的方法列表 */
-static const zend_function_entry meow_coroutine_server_methods[] =
+static const zend_function_entry meow_coroutine_server_coroutine_methods[] =
 {
     PHP_ME(meow_coroutine_server, __construct, arginfo_meow_coroutine_server_construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
-    PHP_ME(meow_coroutine_server, accept, arginfo_meow_coroutine_server_void, ZEND_ACC_PUBLIC)
-    PHP_ME(meow_coroutine_server, recv, arginfo_meow_coroutine_server_recv, ZEND_ACC_PUBLIC)
-    PHP_ME(meow_coroutine_server, send, arginfo_meow_coroutine_server_send, ZEND_ACC_PUBLIC)
-    PHP_ME(meow_coroutine_server, close, arginfo_meow_coroutine_server_close, ZEND_ACC_PUBLIC)
+    PHP_ME(meow_coroutine_server, start, arginfo_meow_coroutine_server_void, ZEND_ACC_PUBLIC)
+    PHP_ME(meow_coroutine_server, shutdown, arginfo_meow_coroutine_server_void, ZEND_ACC_PUBLIC)
+    PHP_ME(meow_coroutine_server, set_handler, arginfo_meow_coroutine_server_set_handler, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
-void meow_coroutine_server_init()
+void meow_coroutine_server_init(int module_number)
 {
-    zval zsocket;
-    /* 初始化 Coroutine\Server */
-    INIT_NS_CLASS_ENTRY(meow_coroutine_sever_ce, "Meow", "Coroutine\\Server", meow_coroutine_server_methods)
-    /* 在 Zend 引擎中注册 Coroutine\Server */
-    meow_coroutine_sever_ce_ptr = zend_register_internal_class(&meow_coroutine_sever_ce TSRMLS_CC);
-    /* 声明 Coroutine\Server 属性 */
-    zend_declare_property(meow_coroutine_sever_ce_ptr, ZEND_STRL("zsocket"), &zsocket, ZEND_ACC_PUBLIC);
-    zend_declare_property_string(meow_coroutine_sever_ce_ptr, ZEND_STRL("host"), "", ZEND_ACC_PUBLIC);
-    zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("port"), -1, ZEND_ACC_PUBLIC);
-    zend_declare_property_long(meow_coroutine_sever_ce_ptr, ZEND_STRL("errCode"), 0, ZEND_ACC_PUBLIC);
-    zend_declare_property_string(meow_coroutine_sever_ce_ptr, ZEND_STRL("errMsg"), "", ZEND_ACC_PUBLIC);
+    INIT_NS_CLASS_ENTRY(meow_coroutine_server_ce, "Meow", "Coroutine\\Server", meow_coroutine_server_coroutine_methods);
+
+    memcpy(&meow_coroutine_server_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    meow_coroutine_server_ce_ptr = zend_register_internal_class(&meow_coroutine_server_ce TSRMLS_CC);
+    MEOW_SET_CLASS_OBJ(meow_coroutine_server, meow_coroutine_server_create_obj, meow_coroutine_server_free_obj, coroutine_server_t , std);
+
+    zend_declare_property_string(meow_coroutine_server_ce_ptr, ZEND_STRL("host"), "", ZEND_ACC_PUBLIC);
+    zend_declare_property_long(meow_coroutine_server_ce_ptr, ZEND_STRL("port"), -1, ZEND_ACC_PUBLIC);
+    zend_declare_property_long(meow_coroutine_server_ce_ptr, ZEND_STRL("errCode"), 0, ZEND_ACC_PUBLIC);
+    zend_declare_property_string(meow_coroutine_server_ce_ptr, ZEND_STRL("errMsg"), "", ZEND_ACC_PUBLIC);
 }

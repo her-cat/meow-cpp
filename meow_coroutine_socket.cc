@@ -46,6 +46,14 @@ static void meow_coroutine_socket_free_obj(zend_object *obj)
     zend_object_std_dtor(&cs->std);
 }
 
+void php_meow_init_socket_obj(zval *zsocket, Socket *socket)
+{
+    zend_object *obj = meow_coroutine_socket_create_obj(meow_coroutine_socket_ce_ptr);
+    coroutine_socket_t *cs = meow_coroutine_socket_fetch_obj(obj);
+    cs->socket = socket;
+    ZVAL_OBJ(zsocket, obj);
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_meow_coroutine_socket_void, 0, 0, 0)
 ZEND_END_ARG_INFO()
 

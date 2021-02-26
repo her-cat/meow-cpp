@@ -49,7 +49,7 @@ ZEND_BEGIN_MODULE_GLOBALS(meow)
 ZEND_END_MODULE_GLOBALS(meow)
 
 void meow_coroutine_util_init();
-void meow_coroutine_server_init();
+void meow_coroutine_server_init(int module_number);
 void meow_coroutine_channel_init();
 void meow_coroutine_socket_init(int module_number);
 void meow_runtime_init();
